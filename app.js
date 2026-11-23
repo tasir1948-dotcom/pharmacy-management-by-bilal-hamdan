@@ -1,391 +1,840 @@
 
-const KEY = "pharmacy_management_data";
+/* PharmaDesk - Pharmacy Management Software */
 
-let db;
-try {
-  db = JSON.parse(localStorage.getItem(KEY)) || {
-    products: [], sales: [], purchases: [], customers: []
-  };
-} catch {
-  db = { products: [], sales: [], purchases: [], customers: [] };
+const STORAGE_KEY = "pharmadesk_data_v1";
+
+let data = {
+  medicines: [],
+  sales: [],
+  purchases: []
+};
+
+let cart = [];
+let currentPage = "dashboard";
+
+const $ = (id) => document.getElementById(id);
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-["products", "sales", "purchases", "customers"].forEach(k => {
-  if (!Array.isArray(db[k])) db[k] = [];
-});
-
-const $ = id => document.getElementById(id);
-const money = n => "Rs. " + Number(n || 0).toLocaleString("en-PK");
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const save = () => localStorage.setItem(KEY, JSON.stringify(db));
-
-function safe(v) {
-  return String(v ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
-  })[c]);
+function loadData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved) {
+      data.medicines = saved.medicines || [];
+      data.sales = saved.sales || [];
+      data.purchases = saved.purchases || [];
+    }
+  } catch (error) {
+    console.error("Could not load saved data:", error);
+  }
 }
 
-function dateNow() {
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function money(value) {
+  return "Rs. " + Number(value || 0).toLocaleString("en-PK", {
+    maximumFractionDigits: 2
+  });
+}
+
+function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
 function notify(message) {
-  alert(message);
-}
-
-function addMedicine() {
-  const name = $("medName")?.value.trim();
-  const category = $("medCategory")?.value.trim() || "General";
-  const batch = $("medBatch")?.value.trim() || "";
-  const expiry = $("medExpiry")?.value || "";
-  const quantity = Number($("medQty")?.value);
-  const purchasePrice = Number($("medPurchase")?.value);
-  const salePrice = Number($("medSale")?.value);
-
-  if (!name) return notify("Enter medicine name.");
-  if (![quantity, purchasePrice, salePrice].every(Number.isFinite) ||
-      quantity < 0 || purchasePrice < 0 || salePrice < 0 ||
-      !Number.isInteger(quantity)) {
-    return notify("Enter valid values.");
+  const toast = $("toast");
+  if (!toast) {
+    alert(message);
+    return;
   }
 
-  db.products.push({
-    id: uid(), name, category, batch, expiry,
-    quantity, purchasePrice, salePrice
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  clearTimeout(notify.timer);
+  notify.timer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2800);
+}
+
+/* PAGE NAVIGATION */
+
+function showPage(page) {
+  currentPage = page;
+
+  document.querySelectorAll("[id^='page-']").forEach(section => {
+    section.hidden = section.id !== "page-" + page;
   });
 
-  save();
-  $("medicineForm")?.reset();
-  renderApp();
-  notify("Medicine added successfully.");
-}
-
-function editMedicine(id) {
-  const p = db.products.find(x => x.id === id);
-  if (!p) return;
-
-  const name = prompt("Medicine name:", p.name);
-  if (name === null) return;
-  if (!name.trim()) return notify("Name cannot be empty.");
-
-  const qty = prompt("Stock quantity:", p.quantity);
-  if (qty === null) return;
-  if (!Number.isInteger(Number(qty)) || Number(qty) < 0)
-    return notify("Invalid quantity.");
-
-  const price = prompt("Sale price:", p.salePrice);
-  if (price === null) return;
-  if (!Number.isFinite(Number(price)) || Number(price) < 0)
-    return notify("Invalid sale price.");
-
-  p.name = name.trim();
-  p.quantity = Number(qty);
-  p.salePrice = Number(price);
-  save();
-  renderApp();
-}
-
-function deleteProduct(id) {
-  if (!confirm("Delete this medicine?")) return;
-  db.products = db.products.filter(p => p.id !== id);
-  save();
-  renderApp();
-}
-
-function addSale(productId, quantity, customer = "Walk-in Customer") {
-  const p = db.products.find(x => x.id === productId);
-  quantity = Number(quantity);
-
-  if (!p || !Number.isInteger(quantity) || quantity <= 0)
-    return notify("Invalid sale details.");
-
-  if (p.quantity < quantity)
-    return notify("Insufficient stock.");
-
-  p.quantity -= quantity;
-
-  db.sales.push({
-    id: uid(), productId, productName: p.name,
-    quantity, price: p.salePrice,
-    total: quantity * p.salePrice,
-    customer, date: new Date().toISOString()
+  document.querySelectorAll("[data-page]").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.page === page
+    );
   });
 
-  save();
-  renderApp();
-  notify("Sale completed successfully.");
-}
-
-function makeSale() {
-  const id = $("saleProduct")?.value;
-  const qty = Number($("saleQty")?.value);
-  const customer = $("saleCustomer")?.value.trim() || "Walk-in Customer";
-  if (!id) return notify("Select a medicine.");
-  addSale(id, qty, customer);
-}
-
-function addPurchase(productId, quantity, unitCost) {
-  const p = db.products.find(x => x.id === productId);
-  quantity = Number(quantity);
-  unitCost = Number(unitCost);
-
-  if (!p || !Number.isInteger(quantity) || quantity <= 0 ||
-      !Number.isFinite(unitCost) || unitCost < 0)
-    return notify("Invalid purchase details.");
-
-  p.quantity += quantity;
-  p.purchasePrice = unitCost;
-
-  db.purchases.push({
-    id: uid(), productId, productName: p.name,
-    quantity, unitCost, total: quantity * unitCost,
-    date: new Date().toISOString()
-  });
-
-  save();
-  renderApp();
-  notify("Purchase recorded successfully.");
-}
-
-function makePurchase() {
-  const id = $("purchaseProduct")?.value;
-  const qty = Number($("purchaseQty")?.value);
-  const cost = Number($("purchaseCost")?.value);
-  if (!id) return notify("Select a medicine.");
-  addPurchase(id, qty, cost);
-}
-
-function addCustomer() {
-  const name = $("customerName")?.value.trim();
-  const phone = $("customerPhone")?.value.trim();
-
-  if (!name) return notify("Enter customer name.");
-
-  db.customers.push({ id: uid(), name, phone });
-  save();
-  $("customerForm")?.reset();
-  renderApp();
-  notify("Customer added.");
-}
-
-function deleteCustomer(id) {
-  if (!confirm("Delete this customer?")) return;
-  db.customers = db.customers.filter(c => c.id !== id);
-  save();
-  renderApp();
-}
-
-function getStats() {
-  return {
-    products: db.products.length,
-    stock: db.products.reduce((s, p) => s + p.quantity, 0),
-    sales: db.sales.reduce((s, p) => s + p.total, 0),
-    purchases: db.purchases.reduce((s, p) => s + p.total, 0),
-    low: db.products.filter(p => p.quantity <= 10).length,
-    expired: db.products.filter(p =>
-      p.expiry && p.expiry < dateNow()
-    ).length
+  const titles = {
+    dashboard: "Dashboard",
+    inventory: "Medicine Inventory",
+    billing: "Billing / Sales",
+    purchases: "Purchases",
+    reports: "Reports"
   };
+
+  if ($("pageTitle")) {
+    $("pageTitle").textContent = titles[page] || "PharmaDesk";
+  }
+
+  renderAll();
 }
 
-function renderApp() {
-  const s = getStats();
-
-  if ($("dashboard")) {
-    $("dashboard").innerHTML = `
-      <div class="stat-card"><h3>Total Medicines</h3><p>${s.products}</p></div>
-      <div class="stat-card"><h3>Total Stock</h3><p>${s.stock}</p></div>
-      <div class="stat-card"><h3>Total Sales</h3><p>${money(s.sales)}</p></div>
-      <div class="stat-card"><h3>Total Purchases</h3><p>${money(s.purchases)}</p></div>
-      <div class="stat-card"><h3>Low Stock Alerts</h3><p>${s.low}</p></div>
-      <div class="stat-card"><h3>Expired Medicines</h3><p>${s.expired}</p></div>
-    `;
-  }
-
-  if ($("inventory")) {
-    $("inventory").innerHTML = `
-      <table>
-        <thead><tr>
-          <th>Medicine</th><th>Category</th><th>Batch</th>
-          <th>Expiry</th><th>Stock</th><th>Purchase</th>
-          <th>Sale</th><th>Actions</th>
-        </tr></thead>
-        <tbody>
-          ${db.products.map(p => `
-            <tr>
-              <td>${safe(p.name)}</td>
-              <td>${safe(p.category)}</td>
-              <td>${safe(p.batch)}</td>
-              <td>${safe(p.expiry)}</td>
-              <td>${p.quantity}</td>
-              <td>${money(p.purchasePrice)}</td>
-              <td>${money(p.salePrice)}</td>
-              <td>
-                <button onclick="editMedicine('${p.id}')">Edit</button>
-                <button onclick="deleteProduct('${p.id}')">Delete</button>
-              </td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    `;
-  }
-
-  const options = db.products.map(p =>
-    `<option value="${p.id}">${safe(p.name)} (Stock: ${p.quantity})</option>`
-  ).join("");
-
-  ["saleProduct", "purchaseProduct"].forEach(id => {
-    if ($(id)) {
-      const previous = $(id).value;
-      $(id).innerHTML = `<option value="">Select Medicine</option>${options}`;
-      if (db.products.some(p => p.id === previous))
-        $(id).value = previous;
-    }
+document.querySelectorAll("[data-page]").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.page);
+    $("sidebar")?.classList.remove("open");
   });
-
-  if ($("sales")) {
-    $("sales").innerHTML = `
-      <table><thead><tr>
-        <th>Date</th><th>Medicine</th><th>Customer</th>
-        <th>Quantity</th><th>Total</th><th>Invoice</th>
-      </tr></thead><tbody>
-      ${db.sales.map(x => `
-        <tr>
-          <td>${safe(x.date.slice(0,10))}</td>
-          <td>${safe(x.productName)}</td>
-          <td>${safe(x.customer)}</td>
-          <td>${x.quantity}</td>
-          <td>${money(x.total)}</td>
-          <td><button onclick="printInvoice('${x.id}')">Print</button></td>
-        </tr>
-      `).join("")}
-      </tbody></table>
-    `;
-  }
-
-  if ($("purchases")) {
-    $("purchases").innerHTML = db.purchases.map(p =>
-      `<p>${safe(p.productName)} — ${p.quantity} — ${money(p.total)}</p>`
-    ).join("") || "<p>No purchases yet.</p>";
-  }
-
-  if ($("customers")) {
-    $("customers").innerHTML = db.customers.map(c => `
-      <p>${safe(c.name)} — ${safe(c.phone)}
-      <button onclick="deleteCustomer('${c.id}')">Delete</button></p>
-    `).join("") || "<p>No customers yet.</p>";
-  }
-
-  if ($("alerts")) {
-    const low = db.products.filter(p => p.quantity <= 10);
-    const expired = db.products.filter(p => p.expiry && p.expiry < dateNow());
-    const soon = db.products.filter(p => {
-      if (!p.expiry || p.expiry < dateNow()) return false;
-      const days = (new Date(p.expiry) - new Date(dateNow())) / 86400000;
-      return days <= 30;
-    });
-
-    $("alerts").innerHTML = `
-      <h3>Low Stock</h3>
-      ${low.map(p => `<p>${safe(p.name)} — ${p.quantity} remaining</p>`).join("") || "<p>None</p>"}
-      <h3>Expired Medicines</h3>
-      ${expired.map(p => `<p>${safe(p.name)} — ${safe(p.expiry)}</p>`).join("") || "<p>None</p>"}
-      <h3>Expiring Within 30 Days</h3>
-      ${soon.map(p => `<p>${safe(p.name)} — ${safe(p.expiry)}</p>`).join("") || "<p>None</p>"}
-    `;
-  }
-
-  if ($("reports")) {
-    const today = dateNow();
-    const daily = db.sales.filter(x => x.date.slice(0,10) === today)
-      .reduce((sum,x) => sum + x.total, 0);
-
-    $("reports").innerHTML = `
-      <p>Today's Sales: <strong>${money(daily)}</strong></p>
-      <p>All-time Sales: <strong>${money(s.sales)}</strong></p>
-      <p>All-time Purchases: <strong>${money(s.purchases)}</strong></p>
-      <p>Total Medicines: ${s.products}</p>
-      <p>Total Stock: ${s.stock}</p>
-    `;
-  }
-}
-
-function printInvoice(id) {
-  const x = db.sales.find(s => s.id === id);
-  if (!x) return;
-
-  const win = window.open("", "_blank");
-  if (!win) return notify("Please allow pop-ups to print invoice.");
-
-  win.document.write(`
-    <html><head><title>Pharmacy Invoice</title>
-    <style>
-      body{font-family:Arial;padding:30px}
-      table{width:100%;border-collapse:collapse}
-      td,th{padding:12px;border:1px solid #ddd;text-align:left}
-    </style></head><body>
-    <h1>PHARMACY INVOICE</h1>
-    <p>Invoice: ${safe(x.id)}</p>
-    <p>Date: ${safe(x.date)}</p>
-    <p>Customer: ${safe(x.customer)}</p>
-    <table><tr><th>Medicine</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-    <tr><td>${safe(x.productName)}</td><td>${x.quantity}</td>
-    <td>${money(x.price)}</td><td>${money(x.total)}</td></tr></table>
-    <h2>Total: ${money(x.total)}</h2>
-    <p>Thank you for your purchase.</p>
-    <script>window.onload=()=>window.print();<\/script>
-    </body></html>
-  `);
-  win.document.close();
-}
-
-function exportData() {
-  const blob = new Blob([JSON.stringify(db, null, 2)], {
-    type: "application/json"
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "pharmacy-backup.json";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function importData(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const imported = JSON.parse(reader.result);
-      for (const k of ["products","sales","purchases","customers"]) {
-        if (!Array.isArray(imported[k])) throw Error("Invalid backup");
-      }
-      if (!confirm("Replace current data with backup?")) return;
-      db = imported;
-      save();
-      renderApp();
-      notify("Backup restored.");
-    } catch {
-      notify("Invalid backup file.");
-    }
-  };
-  reader.readAsText(file);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  renderApp();
 });
 
-window.addMedicine = addMedicine;
-window.editMedicine = editMedicine;
-window.deleteProduct = deleteProduct;
-window.addSale = addSale;
-window.makeSale = makeSale;
-window.addPurchase = addPurchase;
-window.makePurchase = makePurchase;
-window.addCustomer = addCustomer;
-window.deleteCustomer = deleteCustomer;
-window.printInvoice = printInvoice;
-window.exportData = exportData;
-window.importData = importData;
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.go);
+  });
+});
+
+$("menuBtn")?.addEventListener("click", () => {
+  $("sidebar")?.classList.toggle("open");
+});
+
+/* MEDICINE INVENTORY */
+
+function getMedicine(id) {
+  return data.medicines.find(m => String(m.id) === String(id));
+}
+
+function medicineFormValues() {
+  return {
+    name: $("medName").value.trim(),
+    category: $("medCategory").value.trim(),
+    batch: $("medBatch").value.trim(),
+    expiry: $("medExpiry").value,
+    quantity: Number($("medQty").value),
+    reorderLevel: Number($("medReorder").value),
+    salePrice: Number($("medPrice").value),
+    purchasePrice: Number($("medCost").value)
+  };
+}
+
+function openMedicine(id = "") {
+  $("medicineForm")?.reset();
+  $("medicineId").value = id;
+
+  if (id) {
+    const m = getMedicine(id);
+    if (!m) return;
+
+    $("medicineModalTitle").textContent = "Edit Medicine";
+    $("medName").value = m.name;
+    $("medCategory").value = m.category || "";
+    $("medBatch").value = m.batch || "";
+    $("medExpiry").value = m.expiry || "";
+    $("medQty").value = m.quantity;
+    $("medReorder").value = m.reorderLevel;
+    $("medPrice").value = m.salePrice;
+    $("medCost").value = m.purchasePrice;
+  } else {
+    $("medicineModalTitle").textContent = "Add Medicine";
+    $("medQty").value = 0;
+    $("medReorder").value = 10;
+  }
+
+  $("medicineDialog")?.showModal();
+}
+
+$("addMedicineBtn")?.addEventListener("click", () => openMedicine());
+
+$("closeMedicine")?.addEventListener("click", () => {
+  $("medicineDialog")?.close();
+});
+
+$("cancelMedicine")?.addEventListener("click", () => {
+  $("medicineDialog")?.close();
+});
+
+$("medicineForm")?.addEventListener("submit", event => {
+  event.preventDefault();
+
+  const values = medicineFormValues();
+
+  if (!values.name) {
+    notify("Enter medicine name");
+    return;
+  }
+
+  if (
+    values.quantity < 0 ||
+    values.reorderLevel < 0 ||
+    values.salePrice < 0 ||
+    values.purchasePrice < 0
+  ) {
+    notify("Please enter valid numbers");
+    return;
+  }
+
+  const id = $("medicineId").value;
+
+  if (id) {
+    const medicine = getMedicine(id);
+    if (medicine) Object.assign(medicine, values);
+    notify("Medicine updated successfully");
+  } else {
+    data.medicines.push({
+      id: uid(),
+      ...values,
+      createdAt: new Date().toISOString()
+    });
+    notify("Medicine added successfully");
+  }
+
+  saveData();
+  $("medicineDialog")?.close();
+  renderAll();
+});
+
+function deleteMedicine(id) {
+  const medicine = getMedicine(id);
+  if (!medicine) return;
+
+  if (!confirm("Delete " + medicine.name + "?")) return;
+
+  data.medicines = data.medicines.filter(m => m.id !== id);
+  cart = cart.filter(item => item.productId !== id);
+
+  saveData();
+  renderAll();
+  notify("Medicine deleted");
+}
+
+function expiryStatus(expiry) {
+  if (!expiry) return "No expiry";
+
+  const days = Math.ceil(
+    (new Date(expiry + "T00:00:00") - new Date(today() + "T00:00:00")) /
+    86400000
+  );
+
+  if (days < 0) return "Expired";
+  if (days <= 90) return "Expiring soon";
+  return "Good";
+}
+
+function renderInventory() {
+  const table = $("inventoryTable");
+  if (!table) return;
+
+  const search = ($("inventorySearch")?.value || "").toLowerCase();
+  const filter = $("stockFilter")?.value || "all";
+
+  const medicines = data.medicines.filter(m => {
+    const matchesSearch =
+      [m.name, m.category, m.batch].join(" ").toLowerCase().includes(search);
+
+    let matchesFilter = true;
+
+    if (filter === "low") {
+      matchesFilter = m.quantity <= m.reorderLevel;
+    } else if (filter === "out") {
+      matchesFilter = m.quantity <= 0;
+    } else if (filter === "expired") {
+      matchesFilter = expiryStatus(m.expiry) === "Expired";
+    } else if (filter === "expiring") {
+      matchesFilter = expiryStatus(m.expiry) === "Expiring soon";
+    }
+
+    return matchesSearch && matchesFilter;
+  });
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Medicine</th>
+        <th>Category</th>
+        <th>Batch</th>
+        <th>Expiry</th>
+        <th>Stock</th>
+        <th>Sale Price</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${medicines.map(m => `
+        <tr>
+          <td>${escapeHTML(m.name)}</td>
+          <td>${escapeHTML(m.category)}</td>
+          <td>${escapeHTML(m.batch)}</td>
+          <td>${escapeHTML(m.expiry || "-")}</td>
+          <td>${m.quantity}</td>
+          <td>${money(m.salePrice)}</td>
+          <td>
+            <button type="button" data-edit="${m.id}">Edit</button>
+            <button type="button" data-delete="${m.id}">Delete</button>
+          </td>
+        </tr>
+      `).join("")}
+    </tbody>
+  `;
+
+  table.querySelectorAll("[data-edit]").forEach(button => {
+    button.addEventListener("click", () => openMedicine(button.dataset.edit));
+  });
+
+  table.querySelectorAll("[data-delete]").forEach(button => {
+    button.addEventListener("click", () => deleteMedicine(button.dataset.delete));
+  });
+}
+
+$("inventorySearch")?.addEventListener("input", renderInventory);
+$("stockFilter")?.addEventListener("change", renderInventory);
+
+/* BILLING */
+
+function addToCart(id) {
+  const medicine = getMedicine(id);
+  if (!medicine) return;
+
+  if (medicine.quantity <= 0) {
+    notify("Medicine is out of stock");
+    return;
+  }
+
+  if (expiryStatus(medicine.expiry) === "Expired") {
+    notify("This medicine is expired and cannot be sold");
+    return;
+  }
+
+  const existing = cart.find(item => item.productId === id);
+  const wanted = (existing?.quantity || 0) + 1;
+
+  if (wanted > medicine.quantity) {
+    notify("Not enough stock available");
+    return;
+  }
+
+  if (existing) {
+    existing.quantity++;
+  } else {
+    cart.push({
+      productId: id,
+      quantity: 1
+    });
+  }
+
+  renderCart();
+}
+
+function renderBillProducts() {
+  const container = $("billProducts");
+  if (!container) return;
+
+  const search = ($("billSearch")?.value || "").toLowerCase();
+
+  const medicines = data.medicines.filter(m =>
+    m.name.toLowerCase().includes(search) &&
+    m.quantity > 0 &&
+    expiryStatus(m.expiry) !== "Expired"
+  );
+
+  container.innerHTML = medicines.map(m => `
+    <button type="button" class="product-card" data-add="${m.id}">
+      <strong>${escapeHTML(m.name)}</strong>
+      <span>${money(m.salePrice)}</span>
+      <small>Stock: ${m.quantity}</small>
+    </button>
+  `).join("") || "<p>No medicines found</p>";
+
+  container.querySelectorAll("[data-add]").forEach(button => {
+    button.addEventListener("click", () => addToCart(button.dataset.add));
+  });
+}
+
+function renderCart() {
+  const container = $("cartItems");
+  if (!container) return;
+
+  let total = 0;
+
+  container.innerHTML = cart.map(item => {
+    const medicine = getMedicine(item.productId);
+    if (!medicine) return "";
+
+    const lineTotal = medicine.salePrice * item.quantity;
+    total += lineTotal;
+
+    return `
+      <div class="cart-item">
+        <span>${escapeHTML(medicine.name)}</span>
+        <span>${money(medicine.salePrice)}</span>
+        <button type="button" data-minus="${medicine.id}">-</button>
+        <span>${item.quantity}</span>
+        <button type="button" data-plus="${medicine.id}">+</button>
+        <strong>${money(lineTotal)}</strong>
+        <button type="button" data-remove="${medicine.id}">Remove</button>
+      </div>
+    `;
+  }).join("") || "<p>Cart is empty</p>";
+
+  if ($("billTotal")) $("billTotal").textContent = money(total);
+
+  container.querySelectorAll("[data-minus]").forEach(button => {
+    button.addEventListener("click", () => changeCartQty(button.dataset.minus, -1));
+  });
+
+  container.querySelectorAll("[data-plus]").forEach(button => {
+    button.addEventListener("click", () => changeCartQty(button.dataset.plus, 1));
+  });
+
+  container.querySelectorAll("[data-remove]").forEach(button => {
+    button.addEventListener("click", () => {
+      cart = cart.filter(item => item.productId !== button.dataset.remove);
+      renderCart();
+    });
+  });
+}
+
+function changeCartQty(id, change) {
+  const item = cart.find(x => x.productId === id);
+  const medicine = getMedicine(id);
+
+  if (!item || !medicine) return;
+
+  const next = item.quantity + change;
+
+  if (next <= 0) {
+    cart = cart.filter(x => x.productId !== id);
+  } else if (next > medicine.quantity) {
+    notify("Not enough stock available");
+    return;
+  } else {
+    item.quantity = next;
+  }
+
+  renderCart();
+}
+
+$("billSearch")?.addEventListener("input", renderBillProducts);
+
+$("clearCart")?.addEventListener("click", () => {
+  cart = [];
+  renderCart();
+});
+
+function completeSale() {
+  if (cart.length === 0) {
+    notify("Add medicines to the cart first");
+    return;
+  }
+
+  for (const item of cart) {
+    const medicine = getMedicine(item.productId);
+
+    if (
+      !medicine ||
+      medicine.quantity < item.quantity ||
+      expiryStatus(medicine.expiry) === "Expired"
+    ) {
+      notify("Please check stock and expiry before completing sale");
+      return;
+    }
+  }
+
+  const items = cart.map(item => {
+    const medicine = getMedicine(item.productId);
+
+    return {
+      productId: medicine.id,
+      name: medicine.name,
+      quantity: item.quantity,
+      price: medicine.salePrice,
+      total: medicine.salePrice * item.quantity
+    };
+  });
+
+  const total = items.reduce((sum, item) => sum + item.total, 0);
+  const quantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  items.forEach(item => {
+    const medicine = getMedicine(item.productId);
+    medicine.quantity -= item.quantity;
+  });
+
+  const sale = {
+    id: uid(),
+    date: $("billDate")?.value || today(),
+    customer: $("customerName")?.value.trim() || "Walk-in Customer",
+    items,
+    total,
+    quantity
+  };
+
+  data.sales.unshift(sale);
+  cart = [];
+
+  if ($("customerName")) $("customerName").value = "";
+
+  saveData();
+  renderAll();
+  notify("Sale completed successfully");
+
+  printInvoice(sale);
+}
+
+$("completeSale")?.addEventListener("click", completeSale);
+
+function printInvoice(sale) {
+  const invoiceWindow = window.open("", "_blank");
+
+  if (!invoiceWindow) {
+    notify("Allow pop-ups to print the invoice");
+    return;
+  }
+
+  const rows = sale.items.map(item => `
+    <tr>
+      <td>${escapeHTML(item.name)}</td>
+      <td>${item.quantity}</td>
+      <td>${money(item.price)}</td>
+      <td>${money(item.total)}</td>
+    </tr>
+  `).join("");
+
+  invoiceWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Pharmacy Invoice</title>
+      <style>
+        body { font-family: Arial; padding: 25px; color: #222; }
+        h2, p { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        .total { text-align: right; margin-top: 20px; font-size: 20px; }
+      </style>
+    </head>
+    <body>
+      <h2>PharmaDesk Pharmacy</h2>
+      <p>Sales Invoice</p>
+      <p>Invoice: ${escapeHTML(sale.id)}</p>
+      <p>Date: ${escapeHTML(sale.date)}</p>
+      <p>Customer: ${escapeHTML(sale.customer)}</p>
+      <table>
+        <thead><tr><th>Medicine</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="total"><strong>Total: ${money(sale.total)}</strong></div>
+      <p>Thank you for your visit!</p>
+      <script>window.onload = () => window.print();<\/script>
+    </body>
+    </html>
+  `);
+
+  invoiceWindow.document.close();
+}
+
+/* PURCHASES */
+
+$("purchaseForm")?.addEventListener("submit", event => {
+  event.preventDefault();
+
+  const id = $("purchaseMedicine").value;
+  const medicine = getMedicine(id);
+  const quantity = Number($("purchaseQty").value);
+  const supplier = $("purchaseSupplier").value.trim();
+  const cost = Number($("purchaseCost").value);
+
+  if (!medicine) {
+    notify("Select a medicine");
+    return;
+  }
+
+  if (quantity <= 0 || cost < 0) {
+    notify("Enter valid purchase quantity and cost");
+    return;
+  }
+
+  medicine.quantity += quantity;
+  medicine.purchasePrice = cost;
+
+  data.purchases.unshift({
+    id: uid(),
+    date: today(),
+    productId: id,
+    productName: medicine.name,
+    quantity,
+    supplier,
+    unitCost: cost,
+    total: quantity * cost
+  });
+
+  saveData();
+  $("purchaseForm").reset();
+  renderAll();
+  notify("Purchase saved and stock updated");
+});
+
+function renderPurchaseOptions() {
+  const select = $("purchaseMedicine");
+  if (!select) return;
+
+  const previous = select.value;
+
+  select.innerHTML = `
+    <option value="">Select medicine</option>
+    ${data.medicines.map(m => `
+      <option value="${m.id}">${escapeHTML(m.name)}</option>
+    `).join("")}
+  `;
+
+  if (getMedicine(previous)) select.value = previous;
+}
+
+function renderPurchases() {
+  const table = $("purchaseTable");
+  if (!table) return;
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Medicine</th>
+        <th>Quantity</th>
+        <th>Supplier</th>
+        <th>Cost</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.purchases.map(p => `
+        <tr>
+          <td>${escapeHTML(p.date)}</td>
+          <td>${escapeHTML(p.productName)}</td>
+          <td>${p.quantity}</td>
+          <td>${escapeHTML(p.supplier)}</td>
+          <td>${money(p.unitCost)}</td>
+          <td>${money(p.total)}</td>
+        </tr>
+      `).join("")}
+    </tbody>
+  `;
+}
+
+/* DASHBOARD */
+
+function renderDashboard() {
+  const medicines = data.medicines;
+  const lowStock = medicines.filter(m => m.quantity <= m.reorderLevel);
+  const expired = medicines.filter(m => expiryStatus(m.expiry) === "Expired");
+  const expiring = medicines.filter(m => expiryStatus(m.expiry) === "Expiring soon");
+
+  const salesToday = data.sales.filter(s => s.date === today());
+  const totalToday = salesToday.reduce((sum, s) => sum + s.total, 0);
+
+  if ($("statMedicines")) {
+    $("statMedicines").textContent = medicines.length;
+  }
+
+  if ($("statSales")) {
+    $("statSales").textContent = money(totalToday);
+  }
+
+  if ($("statSaleCount")) {
+    $("statSaleCount").textContent = salesToday.length;
+  }
+
+  if ($("statLow")) {
+    $("statLow").textContent = lowStock.length;
+  }
+
+  if ($("statExpiry")) {
+    $("statExpiry").textContent = expired.length + expiring.length;
+  }
+
+  const alerts = $("dashboardAlerts");
+
+  if (alerts) {
+    const messages = [];
+
+    lowStock.forEach(m => {
+      messages.push("Low stock: " + m.name);
+    });
+
+    expired.forEach(m => {
+      messages.push("Expired medicine: " + m.name);
+    });
+
+    expiring.forEach(m => {
+      messages.push("Expiring soon: " + m.name);
+    });
+
+    alerts.innerHTML = messages.length
+      ? messages.map(message => `<p>${escapeHTML(message)}</p>`).join("")
+      : "<p>No stock or expiry alerts</p>";
+  }
+
+  const recent = $("recentSales");
+
+  if (recent) {
+    recent.innerHTML = data.sales.slice(0, 5).map(s => `
+      <tr>
+        <td>${escapeHTML(s.date)}</td>
+        <td>${escapeHTML(s.customer)}</td>
+        <td>${s.quantity || 0}</td>
+        <td>${money(s.total)}</td>
+      </tr>
+    `).join("") || "<tr><td colspan='4'>No sales yet</td></tr>";
+  }
+}
+
+/* REPORTS */
+
+function renderReports() {
+  const total = data.sales.reduce((sum, sale) => sum + sale.total, 0);
+  const count = data.sales.length;
+  const units = data.sales.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
+
+  if ($("reportTotal")) $("reportTotal").textContent = money(total);
+  if ($("reportCount")) $("reportCount").textContent = count;
+  if ($("reportUnits")) $("reportUnits").textContent = units;
+
+  const table = $("salesTable");
+  if (!table) return;
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Customer</th>
+        <th>Items</th>
+        <th>Quantity</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.sales.map(s => `
+        <tr>
+          <td>${escapeHTML(s.date)}</td>
+          <td>${escapeHTML(s.customer)}</td>
+          <td>${(s.items || []).map(i => escapeHTML(i.name)).join(", ")}</td>
+          <td>${s.quantity || 0}</td>
+          <td>${money(s.total)}</td>
+        </tr>
+      `).join("") || "<tr><td colspan='5'>No sales records</td></tr>"}
+    </tbody>
+  `;
+}
+
+/* EXPORT DATA */
+
+function downloadFile(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  link.click();
+
+  URL.revokeObjectURL(url);
+}
+
+function exportBackup() {
+  downloadFile(
+    "pharmadesk-backup.json",
+    JSON.stringify(data, null, 2),
+    "application/json"
+  );
+
+  notify("Backup downloaded");
+}
+
+function exportSalesCSV() {
+  const rows = [
+    ["Date", "Customer", "Medicine", "Quantity", "Total"]
+  ];
+
+  data.sales.forEach(sale => {
+    (sale.items || []).forEach(item => {
+      rows.push([
+        sale.date,
+        sale.customer,
+        item.name,
+        item.quantity,
+        item.total
+      ]);
+    });
+  });
+
+  const csv = rows.map(row =>
+    row.map(value =>
+      '"' + String(value ?? "").replace(/"/g, '""') + '"'
+    ).join(",")
+  ).join("\n");
+
+  downloadFile("pharmacy-sales.csv", csv, "text/csv;charset=utf-8");
+  notify("Sales report downloaded");
+}
+
+$("exportTop")?.addEventListener("click", exportBackup);
+$("exportSales")?.addEventListener("click", exportSalesCSV);
+
+/* FOOTER CREDIT */
+
+function updateFooter() {
+  const footer = document.querySelector("footer");
+
+  if (footer) {
+    footer.innerHTML = `
+      PharmaDesk · Software Created by Bilal Hamdan ·
+      Contact: <a href="tel:03239276900">03239276900</a>
+    `;
+  }
+}
+
+/* RENDER ALL */
+
+function renderAll() {
+  renderDashboard();
+  renderInventory();
+  renderBillProducts();
+  renderCart();
+  renderPurchaseOptions();
+  renderPurchases();
+  renderReports();
+
+  if ($("todayLabel")) {
+    $("todayLabel").textContent = new Date().toLocaleDateString();
+  }
+
+  if ($("billDate") && !$("billDate").value) {
+    $("billDate").value = today();
+  }
+}
+
+/* START APPLICATION */
+
+loadData();
+updateFooter();
+renderAll();
+showPage("dashboard");
