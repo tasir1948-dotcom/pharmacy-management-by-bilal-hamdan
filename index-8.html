@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b35">
+  <title>PharmaDesk — Pharmacy Management</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="brand-mark">✚</div><div><strong>PharmaDesk</strong><small>PHARMACY MANAGEMENT</small></div></div>
+    <nav>
+      <button class="nav-link active" data-page="dashboard"><span>▦</span> Dashboard</button>
+      <button class="nav-link" data-page="inventory"><span>▤</span> Inventory</button>
+      <button class="nav-link" data-page="billing"><span>▣</span> Sales & Billing</button>
+      <button class="nav-link" data-page="purchases"><span>＋</span> Purchases</button>
+      <button class="nav-link" data-page="reports"><span>▥</span> Reports</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="status-dot"></span> Local demo workspace</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Toggle menu">☰</button>
+      <div><div class="eyebrow" id="todayLabel">PHARMACY OVERVIEW</div><h1 id="pageTitle">Dashboard</h1></div>
+      <div class="top-actions"><span class="local-badge">● Saved on this device</span><button class="btn btn-light" id="exportTop">Export data</button></div>
+    </header>
+
+    <section class="page active" id="page-dashboard">
+      <div class="welcome-row"><div><h2>Good day 👋</h2><p>Here’s what’s happening at your pharmacy.</p></div><button class="btn btn-primary" data-go="billing">＋ New sale</button></div>
+      <div class="stats-grid">
+        <article class="stat-card"><div class="stat-icon mint">▤</div><span>Total medicines</span><strong id="statMedicines">0</strong><small>Products in inventory</small></article>
+        <article class="stat-card"><div class="stat-icon blue">↗</div><span>Today's sales</span><strong id="statSales">Rs 0</strong><small id="statSaleCount">0 transactions</small></article>
+        <article class="stat-card"><div class="stat-icon amber">!</div><span>Low stock</span><strong id="statLow">0</strong><small>At or below reorder level</small></article>
+        <article class="stat-card"><div class="stat-icon rose">◷</div><span>Expiring soon</span><strong id="statExpiry">0</strong><small>Within the next 90 days</small></article>
+      </div>
+      <div class="content-grid">
+        <article class="panel"><div class="panel-heading"><div><h3>Stock alerts</h3><p>Items that may need attention</p></div><button class="text-btn" data-go="inventory">View inventory →</button></div><div id="dashboardAlerts" class="table-wrap"></div></article>
+        <article class="panel quick-panel"><div class="panel-heading"><div><h3>Quick actions</h3><p>Common pharmacy tasks</p></div></div><button class="quick-action" data-go="billing"><span class="quick-icon">▣</span><span><b>Create a bill</b><small>Record a customer sale</small></span><i>→</i></button><button class="quick-action" data-go="inventory"><span class="quick-icon">＋</span><span><b>Add medicine</b><small>Update your stock list</small></span><i>→</i></button><button class="quick-action" data-go="purchases"><span class="quick-icon">▤</span><span><b>Record purchase</b><small>Restock from supplier</small></span><i>→</i></button></article>
+      </div>
+      <article class="panel"><div class="panel-heading"><div><h3>Recent sales</h3><p>Latest transactions</p></div><button class="text-btn" data-go="reports">All reports →</button></div><div id="recentSales" class="table-wrap"></div></article>
+    </section>
+
+    <section class="page" id="page-inventory">
+      <div class="page-toolbar"><div><h2>Medicine inventory</h2><p>Manage products, quantities and expiry dates.</p></div><button class="btn btn-primary" id="addMedicineBtn">＋ Add medicine</button></div>
+      <div class="filter-row"><input id="inventorySearch" class="search" placeholder="Search by medicine, category or batch…"><select id="stockFilter"><option value="all">All stock</option><option value="low">Low stock</option><option value="expired">Expired</option><option value="expiring">Expiring in 90 days</option></select></div>
+      <article class="panel table-panel"><div id="inventoryTable" class="table-wrap"></div></article>
+    </section>
+
+    <section class="page" id="page-billing">
+      <div class="page-toolbar"><div><h2>Sales & billing</h2><p>Create a sale and automatically update stock.</p></div><span class="soft-chip">New transaction</span></div>
+      <div class="billing-layout">
+        <article class="panel"><h3>Add items</h3><p class="muted">Search and add available medicines to the bill.</p><input id="billSearch" class="search full" placeholder="Search medicine…"><div id="billProducts" class="product-list"></div></article>
+        <article class="panel bill-panel"><div class="panel-heading"><div><h3>Current bill</h3><p id="billDate"></p></div><button class="text-btn" id="clearCart">Clear</button></div><label class="field-label" for="customerName">Customer name (optional)</label><input id="customerName" class="field" placeholder="Walk-in customer"><div id="cartItems" class="cart-items"></div><div class="bill-total"><span>Total amount</span><strong id="billTotal">Rs 0</strong></div><button class="btn btn-primary btn-wide" id="completeSale">Complete sale</button><small class="hint">Only complete a sale after confirming the items and quantities.</small></article>
+      </div>
+    </section>
+
+    <section class="page" id="page-purchases">
+      <div class="page-toolbar"><div><h2>Purchase entry</h2><p>Record stock received from a supplier.</p></div></div>
+      <article class="panel form-panel"><form id="purchaseForm" class="form-grid">
+        <label>Medicine<select id="purchaseMedicine" required></select></label>
+        <label>Quantity received<input id="purchaseQty" type="number" min="1" step="1" required placeholder="e.g. 50"></label>
+        <label>Supplier name<input id="purchaseSupplier" placeholder="Supplier / distributor"></label>
+        <label>Purchase cost per unit (Rs)<input id="purchaseCost" type="number" min="0" step="0.01" placeholder="Optional"></label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Save purchase</button></div>
+      </form></article>
+      <article class="panel"><div class="panel-heading"><div><h3>Recent purchases</h3><p>Latest stock receipts</p></div></div><div id="purchaseTable" class="table-wrap"></div></article>
+    </section>
+
+    <section class="page" id="page-reports">
+      <div class="page-toolbar"><div><h2>Reports</h2><p>Review recorded sales and pharmacy activity.</p></div><button class="btn btn-light" id="exportSales">Download sales CSV</button></div>
+      <div class="stats-grid report-stats"><article class="stat-card"><span>Total sales recorded</span><strong id="reportTotal">Rs 0</strong><small>All saved transactions</small></article><article class="stat-card"><span>Transactions</span><strong id="reportCount">0</strong><small>Number of sales</small></article><article class="stat-card"><span>Units sold</span><strong id="reportUnits">0</strong><small>Across all transactions</small></article></div>
+      <article class="panel"><div class="panel-heading"><div><h3>Sales history</h3><p>Saved transactions on this device</p></div></div><div id="salesTable" class="table-wrap"></div></article>
+    </section>
+
+    <footer>PharmaDesk demo · Keep your records accurate and protect customer privacy.</footer>
+  </main>
+
+  <dialog id="medicineDialog" class="modal">
+    <form id="medicineForm">
+      <div class="modal-head"><div><h2 id="medicineModalTitle">Add medicine</h2><p>Enter the product details below.</p></div><button type="button" class="close-btn" id="closeMedicine">×</button></div>
+      <input type="hidden" id="medicineId">
+      <div class="form-grid">
+        <label>Medicine name<input id="medName" required maxlength="80" placeholder="e.g. Paracetamol 500mg"></label>
+        <label>Category<input id="medCategory" maxlength="50" placeholder="e.g. Tablet"></label>
+        <label>Batch number<input id="medBatch" maxlength="40" placeholder="Batch / lot"></label>
+        <label>Expiry date<input id="medExpiry" type="date" required></label>
+        <label>Quantity in stock<input id="medQty" type="number" min="0" step="1" required></label>
+        <label>Reorder level<input id="medReorder" type="number" min="0" step="1" value="10" required></label>
+        <label>Sale price per unit (Rs)<input id="medPrice" type="number" min="0" step="0.01" required></label>
+        <label>Purchase cost per unit (Rs)<input id="medCost" type="number" min="0" step="0.01" value="0"></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn btn-light" id="cancelMedicine">Cancel</button><button type="submit" class="btn btn-primary">Save medicine</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
