@@ -653,6 +653,6 @@ onAuthStateChanged(auth,async user=>{
   } else {
     $("sidebar").hidden=true;
     document.querySelector(".main").hidden=true;
-    createLoginScreen();
+    createLogin();
   }
 });
