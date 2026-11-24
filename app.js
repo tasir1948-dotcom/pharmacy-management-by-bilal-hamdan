@@ -1,3 +1,4 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 
 import {
@@ -31,6 +32,8 @@ const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 
+const ADMIN_UID = "2G0NYXe6FNOsos45dFLBBEF7b0K3";
+
 /* ================= APP STATE ================= */
 
 const $ = id => document.getElementById(id);
@@ -48,6 +51,10 @@ let db = {
 
 let cart = [];
 let currentPage = "dashboard";
+
+function localDataKey() {
+  return `${KEY}_${currentUser?.uid || "guest"}`;
+}
 
 function normalizeData(data) {
   return {
@@ -98,9 +105,172 @@ function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
 }
 
+/* ================= LOGIN DESIGN ================= */
+
+function addAuthStyles() {
+  if ($("authStyles")) return;
+
+  const style = document.createElement("style");
+  style.id = "authStyles";
+
+  style.textContent = `
+    #loginOverlay,#accessOverlay {
+      position:fixed;
+      inset:0;
+      z-index:999999;
+      background:#f2f6f5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      font-family:Arial,sans-serif;
+      overflow:auto;
+    }
+
+    .login-card,.access-card {
+      width:100%;
+      max-width:390px;
+      background:white;
+      padding:30px 24px;
+      border-radius:18px;
+      box-shadow:0 12px 45px rgba(0,0,0,.10);
+      text-align:center;
+      box-sizing:border-box;
+    }
+
+    .login-logo {
+      width:55px;
+      height:55px;
+      margin:auto auto 12px;
+      display:grid;
+      place-items:center;
+      border-radius:15px;
+      background:#123b35;
+      color:white;
+      font-size:30px;
+    }
+
+    .login-card h2,.access-card h2 {
+      margin:8px 0;
+      color:#123b35;
+    }
+
+    .login-card p,.access-card p {
+      color:#687b77;
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .login-card label {
+      display:block;
+      text-align:left;
+      margin:18px 0 7px;
+      font-size:13px;
+      font-weight:bold;
+    }
+
+    .login-card input {
+      width:100%;
+      box-sizing:border-box;
+      padding:13px;
+      border:1px solid #d8e2df;
+      border-radius:9px;
+      font-size:16px;
+    }
+
+    .login-card button,.access-card button {
+      width:100%;
+      padding:13px;
+      margin-top:14px;
+      border:0;
+      border-radius:9px;
+      background:#123b35;
+      color:white;
+      font-weight:bold;
+      font-size:15px;
+      cursor:pointer;
+    }
+
+    .login-card button:disabled {
+      opacity:.6;
+    }
+
+    #registerBtn {
+      background:#e9f0ee;
+      color:#123b35;
+    }
+
+    #loginMessage {
+      min-height:18px;
+      margin-top:15px;
+    }
+
+    #adminRequestsOverlay {
+      position:fixed;
+      inset:0;
+      z-index:99998;
+      background:rgba(0,0,0,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:15px;
+    }
+
+    .admin-requests-card {
+      background:white;
+      width:100%;
+      max-width:650px;
+      max-height:85vh;
+      overflow:auto;
+      padding:20px;
+      border-radius:15px;
+      box-sizing:border-box;
+    }
+
+    .request-row {
+      border:1px solid #dce6e3;
+      border-radius:10px;
+      padding:13px;
+      margin:12px 0;
+      overflow-wrap:anywhere;
+    }
+
+    .request-actions {
+      display:flex;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .request-actions button {
+      flex:1;
+      border:0;
+      padding:10px;
+      border-radius:7px;
+      color:white;
+      cursor:pointer;
+    }
+
+    .approve-request { background:#16794b; }
+    .reject-request { background:#bd3434; }
+
+    .admin-close {
+      background:#123b35;
+      color:white;
+      border:0;
+      padding:10px 16px;
+      border-radius:7px;
+      cursor:pointer;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
 /* ================= EMAIL LOGIN ================= */
 
 function createLogin() {
+  addAuthStyles();
+
   if ($("loginOverlay")) return;
 
   const overlay = document.createElement("div");
@@ -129,99 +299,6 @@ function createLogin() {
     </div>
   `;
 
-  const style = document.createElement("style");
-  style.id = "loginStyles";
-  style.textContent = `
-    #loginOverlay {
-      position:fixed;
-      inset:0;
-      z-index:99999;
-      background:#f2f6f5;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      font-family:Arial,sans-serif;
-    }
-
-    .login-card {
-      width:100%;
-      max-width:390px;
-      background:white;
-      padding:30px 24px;
-      border-radius:18px;
-      box-shadow:0 12px 45px rgba(0,0,0,.10);
-      text-align:center;
-    }
-
-    .login-logo {
-      width:55px;
-      height:55px;
-      margin:auto auto 12px;
-      display:grid;
-      place-items:center;
-      border-radius:15px;
-      background:#123b35;
-      color:white;
-      font-size:30px;
-    }
-
-    .login-card h2 {
-      margin:8px 0;
-      color:#123b35;
-    }
-
-    .login-card p {
-      color:#687b77;
-      font-size:13px;
-    }
-
-    .login-card label {
-      display:block;
-      text-align:left;
-      margin:18px 0 7px;
-      font-size:13px;
-      font-weight:bold;
-    }
-
-    .login-card input {
-      width:100%;
-      box-sizing:border-box;
-      padding:13px;
-      border:1px solid #d8e2df;
-      border-radius:9px;
-      font-size:16px;
-    }
-
-    .login-card button {
-      width:100%;
-      padding:13px;
-      margin-top:14px;
-      border:0;
-      border-radius:9px;
-      background:#123b35;
-      color:white;
-      font-weight:bold;
-      font-size:15px;
-      cursor:pointer;
-    }
-
-    .login-card button:disabled {
-      opacity:.6;
-    }
-
-    #registerBtn {
-      background:#e9f0ee;
-      color:#123b35;
-    }
-
-    #loginMessage {
-      min-height:18px;
-      margin-top:15px;
-    }
-  `;
-
-  document.head.appendChild(style);
   document.body.appendChild(overlay);
 
   $("loginBtn").addEventListener("click", loginUser);
@@ -273,13 +350,232 @@ async function registerUser() {
   button.textContent = "Creating account...";
 
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    message.textContent = "Account created successfully.";
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    await ensureAccessRequest(credential.user);
+
+    message.textContent = "Account created. Waiting for admin approval.";
   } catch (error) {
     console.error("Registration error:", error);
     message.textContent = error.message;
     button.disabled = false;
     button.textContent = "Create Account";
+  }
+}
+
+/* ================= ACCESS REQUEST SYSTEM ================= */
+
+async function ensureAccessRequest(user) {
+  if (!user || user.uid === ADMIN_UID) return;
+
+  const requestRef = ref(
+    database,
+    `accessRequests/${user.uid}/request`
+  );
+
+  const snapshot = await get(requestRef);
+
+  if (!snapshot.exists()) {
+    await set(requestRef, {
+      email: user.email || "",
+      requestedAt: new Date().toISOString()
+    });
+  }
+}
+
+async function getApprovalStatus(user) {
+  const approvedSnapshot = await get(
+    ref(database, `approvedUsers/${user.uid}`)
+  );
+
+  if (approvedSnapshot.val() === true) {
+    return "approved";
+  }
+
+  const statusSnapshot = await get(
+    ref(database, `accessRequests/${user.uid}/status`)
+  );
+
+  return statusSnapshot.val() || "pending";
+}
+
+function showAccessScreen(user, status) {
+  $("loginOverlay")?.remove();
+
+  $("sidebar")?.style.setProperty("display", "none");
+  document.querySelector(".main")?.style.setProperty("display", "none");
+
+  $("accessOverlay")?.remove();
+
+  const rejected = status === "rejected";
+
+  const overlay = document.createElement("div");
+  overlay.id = "accessOverlay";
+
+  overlay.innerHTML = `
+    <div class="access-card">
+      <div class="login-logo">✚</div>
+      <h2>PharmaDesk</h2>
+      <h3>${rejected ? "Access Request Rejected" : "Approval Pending"}</h3>
+      <p>
+        ${rejected
+          ? "Your access request was rejected by the administrator. Please contact the administrator."
+          : "Your account has been created successfully. Please wait until the administrator approves your access."
+        }
+      </p>
+      <p><b>${escapeHTML(user.email || "")}</b></p>
+      <button id="pendingLogoutBtn">Logout</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  $("pendingLogoutBtn").addEventListener("click", async () => {
+    await signOut(auth);
+  });
+}
+
+function showAccessError(message) {
+  $("loginOverlay")?.remove();
+  $("accessOverlay")?.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "accessOverlay";
+
+  overlay.innerHTML = `
+    <div class="access-card">
+      <h2>PharmaDesk</h2>
+      <h3>Unable to verify access</h3>
+      <p>${escapeHTML(message)}</p>
+      <button id="accessRetryBtn">Retry</button>
+      <button id="accessErrorLogoutBtn">Logout</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  $("accessRetryBtn").addEventListener("click", () => {
+    if (currentUser) startApp(currentUser);
+  });
+
+  $("accessErrorLogoutBtn").addEventListener("click", () => {
+    signOut(auth);
+  });
+}
+
+/* ================= ADMIN REQUEST PANEL ================= */
+
+function addAdminButton() {
+  if (!currentUser || currentUser.uid !== ADMIN_UID) return;
+
+  const actions = document.querySelector(".top-actions");
+  if (!actions || $("adminRequestsBtn")) return;
+
+  const button = document.createElement("button");
+  button.id = "adminRequestsBtn";
+  button.className = "btn btn-light";
+  button.textContent = "Access Requests";
+
+  button.addEventListener("click", showAdminRequests);
+
+  actions.appendChild(button);
+}
+
+async function showAdminRequests() {
+  if (!currentUser || currentUser.uid !== ADMIN_UID) return;
+
+  try {
+    const snapshot = await get(ref(database, "accessRequests"));
+    const requests = snapshot.val() || {};
+
+    $("adminRequestsOverlay")?.remove();
+
+    const rows = Object.entries(requests).map(([uid, item]) => {
+      const request = item?.request || {};
+      const status = item?.status || "pending";
+
+      return { uid, email: request.email || "Unknown email", requestedAt: request.requestedAt || "", status };
+    }).filter(item => item.status !== "approved");
+
+    const overlay = document.createElement("div");
+    overlay.id = "adminRequestsOverlay";
+
+    overlay.innerHTML = `
+      <div class="admin-requests-card">
+        <h2>PharmaDesk Access Requests</h2>
+        <p>Review accounts waiting for access approval.</p>
+        <h3>Requests: ${rows.filter(r => r.status === "pending").length} pending</h3>
+
+        <div id="adminRequestList">
+          ${rows.length ? rows.map(item => `
+            <div class="request-row">
+              <b>${escapeHTML(item.email)}</b>
+              <p>Status: ${escapeHTML(item.status)}</p>
+              <small>${escapeHTML(item.requestedAt)}</small>
+              ${item.status === "pending" ? `
+                <div class="request-actions">
+                  <button class="approve-request" data-approve="${escapeHTML(item.uid)}">Approve</button>
+                  <button class="reject-request" data-reject="${escapeHTML(item.uid)}">Reject</button>
+                </div>
+              ` : ""}
+            </div>
+          `).join("") : "<p>No access requests found.</p>"}
+        </div>
+
+        <button class="admin-close" id="closeAdminRequests">Close</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    $("closeAdminRequests").addEventListener("click", () => overlay.remove());
+
+    overlay.addEventListener("click", async event => {
+      const approve = event.target.closest("[data-approve]");
+      const reject = event.target.closest("[data-reject]");
+
+      if (approve) {
+        await updateUserAccess(approve.dataset.approve, true);
+      }
+
+      if (reject) {
+        await updateUserAccess(reject.dataset.reject, false);
+      }
+    });
+
+  } catch (error) {
+    console.error("Admin requests error:", error);
+    toast("Could not load requests. Check Firebase rules.");
+  }
+}
+
+async function updateUserAccess(uid, approved) {
+  if (!currentUser || currentUser.uid !== ADMIN_UID) return;
+
+  if (!uid) return;
+
+  try {
+    await set(
+      ref(database, `approvedUsers/${uid}`),
+      approved
+    );
+
+    await set(
+      ref(database, `accessRequests/${uid}/status`),
+      approved ? "approved" : "rejected"
+    );
+
+    toast(approved ? "User approved successfully." : "User rejected.");
+
+    await showAdminRequests();
+
+  } catch (error) {
+    console.error("Approval update error:", error);
+    toast("Could not update access. Check Firebase rules.");
   }
 }
 
@@ -295,11 +591,15 @@ async function loadCloud() {
 
   if (snapshot.exists()) {
     db = normalizeData(snapshot.val());
-    localStorage.setItem(KEY, JSON.stringify(db));
+
+    localStorage.setItem(localDataKey(), JSON.stringify(db));
     return;
   }
 
-  const local = localStorage.getItem(KEY);
+  // Only the administrator may import the old shared local data.
+  const local = currentUser.uid === ADMIN_UID
+    ? (localStorage.getItem(KEY) || localStorage.getItem(localDataKey()))
+    : localStorage.getItem(localDataKey());
 
   if (local) {
     try {
@@ -323,11 +623,11 @@ async function loadCloud() {
     db = normalizeData({});
   }
 
-  localStorage.setItem(KEY, JSON.stringify(db));
+  localStorage.setItem(localDataKey(), JSON.stringify(db));
 }
 
 function saveData() {
-  localStorage.setItem(KEY, JSON.stringify(db));
+  localStorage.setItem(localDataKey(), JSON.stringify(db));
 
   if (!currentUser) return Promise.resolve();
 
@@ -1046,24 +1346,47 @@ async function startApp(user) {
   currentUser = user;
 
   try {
+    $("accessOverlay")?.remove();
+
+    // Admin bypasses approval.
+    if (user.uid !== ADMIN_UID) {
+      await ensureAccessRequest(user);
+
+      const status = await getApprovalStatus(user);
+
+      if (status !== "approved") {
+        showAccessScreen(user, status);
+        return;
+      }
+    }
+
+    // Only approved accounts reach the pharmacy dashboard.
+    $("sidebar")?.style.removeProperty("display");
+    document.querySelector(".main")?.style.removeProperty("display");
+
     await loadCloud();
 
     setupEvents();
     addLogoutButton();
+    addAdminButton();
     renderAll();
 
-    const overlay = $("loginOverlay");
-    if (overlay) overlay.remove();
+    $("loginOverlay")?.remove();
 
     toast("PharmaDesk ready.");
+
   } catch (error) {
     console.error("App startup error:", error);
-    toast("Could not load cloud data. Check Firebase database rules and internet.");
+
+    showAccessError(
+      "Could not verify your account or load cloud data. Check your internet connection and Firebase database rules."
+    );
   }
 }
 
 /* ================= AUTH LISTENER ================= */
 
+addAuthStyles();
 createLogin();
 
 onAuthStateChanged(auth, async user => {
@@ -1073,8 +1396,15 @@ onAuthStateChanged(auth, async user => {
     currentUser = null;
     cart = [];
 
-    if (!$("loginOverlay")) {
-      createLogin();
-    }
+    $("accessOverlay")?.remove();
+    $("adminRequestsOverlay")?.remove();
+
+    $("sidebar")?.style.removeProperty("display");
+    document.querySelector(".main")?.style.removeProperty("display");
+
+    if ($("logoutBtn")) $("logoutBtn").remove();
+    if ($("adminRequestsBtn")) $("adminRequestsBtn").remove();
+
+    createLogin();
   }
 });
