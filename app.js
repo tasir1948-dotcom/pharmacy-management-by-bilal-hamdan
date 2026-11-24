@@ -1,12 +1,13 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+
 import {
   getAuth,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
   onAuthStateChanged,
-  signOut
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
 import {
   getDatabase,
   ref,
@@ -36,8 +37,6 @@ const $ = id => document.getElementById(id);
 const KEY = "pharmacy_management_data";
 
 let currentUser = null;
-let confirmationResult = null;
-let recaptchaVerifier = null;
 let eventsReady = false;
 let saveQueue = Promise.resolve();
 
@@ -99,7 +98,7 @@ function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
 }
 
-/* ================= OTP LOGIN ================= */
+/* ================= EMAIL LOGIN ================= */
 
 function createLogin() {
   if ($("loginOverlay")) return;
@@ -113,27 +112,18 @@ function createLogin() {
       <h2>PharmaDesk</h2>
       <p>Secure pharmacy management login</p>
 
-      <div id="phoneStep">
-        <label>Mobile number</label>
-        <input id="loginPhone" type="tel"
-          placeholder="+923001234567"
-          autocomplete="tel">
+      <label>Email address</label>
+      <input id="loginEmail" type="email"
+        placeholder="Enter your email"
+        autocomplete="email">
 
-        <div id="recaptcha-container"></div>
+      <label>Password</label>
+      <input id="loginPassword" type="password"
+        placeholder="Enter your password"
+        autocomplete="current-password">
 
-        <button id="sendOtpBtn" type="button">Send OTP</button>
-      </div>
-
-      <div id="otpStep" style="display:none">
-        <label>Enter OTP</label>
-        <input id="loginOtp" type="text"
-          inputmode="numeric"
-          maxlength="6"
-          placeholder="Enter 6-digit OTP">
-
-        <button id="verifyOtpBtn" type="button">Verify OTP</button>
-        <button id="backPhoneBtn" type="button">Change number</button>
-      </div>
+      <button id="loginBtn" type="button">Login</button>
+      <button id="registerBtn" type="button">Create Account</button>
 
       <p id="loginMessage"></p>
     </div>
@@ -143,134 +133,153 @@ function createLogin() {
   style.id = "loginStyles";
   style.textContent = `
     #loginOverlay {
-      position:fixed; inset:0; z-index:99999;
-      background:#f2f6f5; display:flex;
-      align-items:center; justify-content:center;
-      padding:18px; font-family:Arial,sans-serif;
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      background:#f2f6f5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      font-family:Arial,sans-serif;
     }
+
     .login-card {
-      width:100%; max-width:390px; background:white;
-      padding:30px 24px; border-radius:18px;
+      width:100%;
+      max-width:390px;
+      background:white;
+      padding:30px 24px;
+      border-radius:18px;
       box-shadow:0 12px 45px rgba(0,0,0,.10);
       text-align:center;
     }
+
     .login-logo {
-      width:55px;height:55px;margin:auto auto 12px;
-      display:grid;place-items:center;
-      border-radius:15px;background:#123b35;
-      color:white;font-size:30px;
+      width:55px;
+      height:55px;
+      margin:auto auto 12px;
+      display:grid;
+      place-items:center;
+      border-radius:15px;
+      background:#123b35;
+      color:white;
+      font-size:30px;
     }
-    .login-card h2 {margin:8px 0;color:#123b35}
-    .login-card p {color:#687b77;font-size:13px}
+
+    .login-card h2 {
+      margin:8px 0;
+      color:#123b35;
+    }
+
+    .login-card p {
+      color:#687b77;
+      font-size:13px;
+    }
+
     .login-card label {
-      display:block;text-align:left;margin:18px 0 7px;
-      font-size:13px;font-weight:bold;
+      display:block;
+      text-align:left;
+      margin:18px 0 7px;
+      font-size:13px;
+      font-weight:bold;
     }
+
     .login-card input {
-      width:100%;box-sizing:border-box;padding:13px;
-      border:1px solid #d8e2df;border-radius:9px;
+      width:100%;
+      box-sizing:border-box;
+      padding:13px;
+      border:1px solid #d8e2df;
+      border-radius:9px;
       font-size:16px;
     }
+
     .login-card button {
-      width:100%;padding:13px;margin-top:14px;
-      border:0;border-radius:9px;background:#123b35;
-      color:white;font-weight:bold;font-size:15px;
+      width:100%;
+      padding:13px;
+      margin-top:14px;
+      border:0;
+      border-radius:9px;
+      background:#123b35;
+      color:white;
+      font-weight:bold;
+      font-size:15px;
       cursor:pointer;
     }
-    .login-card button:disabled {opacity:.6}
-    #backPhoneBtn {background:#e9f0ee;color:#123b35}
-    #recaptcha-container {
-      margin-top:12px;display:flex;justify-content:center;
-      overflow:hidden;
+
+    .login-card button:disabled {
+      opacity:.6;
     }
-    #loginMessage {min-height:18px;margin-top:15px}
+
+    #registerBtn {
+      background:#e9f0ee;
+      color:#123b35;
+    }
+
+    #loginMessage {
+      min-height:18px;
+      margin-top:15px;
+    }
   `;
 
   document.head.appendChild(style);
   document.body.appendChild(overlay);
 
-  $("sendOtpBtn").addEventListener("click", sendOTP);
-  $("verifyOtpBtn").addEventListener("click", verifyOTP);
-
-  $("backPhoneBtn").addEventListener("click", () => {
-    $("otpStep").style.display = "none";
-    $("phoneStep").style.display = "block";
-    $("loginMessage").textContent = "";
-  });
+  $("loginBtn").addEventListener("click", loginUser);
+  $("registerBtn").addEventListener("click", registerUser);
 }
 
-async function sendOTP() {
-  const phone = $("loginPhone")?.value.trim();
-  const button = $("sendOtpBtn");
+async function loginUser() {
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  const button = $("loginBtn");
   const message = $("loginMessage");
 
-  if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone)) {
-    message.textContent = "Enter number with country code, e.g. +923001234567";
+  if (!email || !password) {
+    message.textContent = "Enter email and password.";
     return;
   }
 
   button.disabled = true;
-  button.textContent = "Sending...";
+  button.textContent = "Logging in...";
 
   try {
-    if (recaptchaVerifier) {
-      try {
-        await recaptchaVerifier.clear();
-      } catch {}
-      recaptchaVerifier = null;
-    }
-
-    recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      { size: "normal" }
-    );
-
-    await recaptchaVerifier.render();
-
-    confirmationResult = await signInWithPhoneNumber(
-      auth,
-      phone,
-      recaptchaVerifier
-    );
-
-    $("phoneStep").style.display = "none";
-    $("otpStep").style.display = "block";
-    message.textContent = "OTP sent. Please check your phone.";
-  } catch (error) {
-    console.error("OTP send error:", error);
-    message.textContent = error.message || "OTP could not be sent.";
-    button.disabled = false;
-    button.textContent = "Send OTP";
-  }
-}
-
-async function verifyOTP() {
-  const otp = $("loginOtp")?.value.trim();
-  const button = $("verifyOtpBtn");
-  const message = $("loginMessage");
-
-  if (!confirmationResult) {
-    message.textContent = "Please request OTP first.";
-    return;
-  }
-
-  if (!/^\d{6}$/.test(otp || "")) {
-    message.textContent = "Enter the 6-digit OTP.";
-    return;
-  }
-
-  button.disabled = true;
-  button.textContent = "Verifying...";
-
-  try {
-    await confirmationResult.confirm(otp);
+    await signInWithEmailAndPassword(auth, email, password);
     message.textContent = "Login successful.";
   } catch (error) {
-    console.error("OTP verification error:", error);
-    message.textContent = error.message || "Incorrect OTP.";
+    console.error("Login error:", error);
+    message.textContent = error.message;
     button.disabled = false;
-    button.textContent = "Verify OTP";
+    button.textContent = "Login";
+  }
+}
+
+async function registerUser() {
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  const button = $("registerBtn");
+  const message = $("loginMessage");
+
+  if (!email || !password) {
+    message.textContent = "Enter email and password.";
+    return;
+  }
+
+  if (password.length < 6) {
+    message.textContent = "Password must be at least 6 characters.";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Creating account...";
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    message.textContent = "Account created successfully.";
+  } catch (error) {
+    console.error("Registration error:", error);
+    message.textContent = error.message;
+    button.disabled = false;
+    button.textContent = "Create Account";
   }
 }
 
@@ -290,12 +299,12 @@ async function loadCloud() {
     return;
   }
 
-  // If this account has no cloud record, retain any existing local records.
   const local = localStorage.getItem(KEY);
 
   if (local) {
     try {
       const localData = normalizeData(JSON.parse(local));
+
       const hasLocalData =
         localData.medicines.length ||
         localData.sales.length ||
@@ -402,18 +411,23 @@ function renderDashboard() {
   const expiring = medicines.filter(isExpiring);
 
   if ($("statMedicines")) $("statMedicines").textContent = medicines.length;
+
   if ($("statSales")) {
     $("statSales").textContent = money(
       sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0)
     );
   }
+
   if ($("statSaleCount")) {
     $("statSaleCount").textContent = `${sales.length} transactions`;
   }
+
   if ($("statLow")) $("statLow").textContent = low.length;
   if ($("statExpiry")) $("statExpiry").textContent = expiring.length;
 
-  const alerts = medicines.filter(m => isLow(m) || isExpired(m) || isExpiring(m));
+  const alerts = medicines.filter(m =>
+    isLow(m) || isExpired(m) || isExpiring(m)
+  );
 
   if ($("dashboardAlerts")) {
     $("dashboardAlerts").innerHTML = alerts.length
@@ -430,6 +444,7 @@ function renderDashboard() {
 
   if ($("recentSales")) {
     const recent = [...db.sales].reverse().slice(0, 5);
+
     $("recentSales").innerHTML = recent.length
       ? `<table><thead><tr><th>Date</th><th>Customer</th><th>Total</th></tr></thead><tbody>
         ${recent.map(s => `
@@ -581,6 +596,7 @@ function renderBillProducts() {
 
 function addToCart(id) {
   const medicine = db.medicines.find(m => m.id === id);
+
   if (!medicine || Number(medicine.qty) <= 0 || isExpired(medicine)) {
     toast("Medicine is unavailable.");
     return;
@@ -593,6 +609,7 @@ function addToCart(id) {
       toast("Not enough stock.");
       return;
     }
+
     existing.qty++;
   } else {
     cart.push({
@@ -626,13 +643,17 @@ function renderCart() {
       </div>`).join("")
     : `<p class="empty-state">Your bill is empty.</p>`;
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const total = cart.reduce((sum, item) =>
+    sum + item.price * item.qty, 0
+  );
+
   if ($("billTotal")) $("billTotal").textContent = money(total);
 }
 
 function changeCartQty(id, amount) {
   const item = cart.find(i => i.id === id);
   const medicine = db.medicines.find(m => m.id === id);
+
   if (!item || !medicine) return;
 
   const next = item.qty + amount;
@@ -669,7 +690,9 @@ async function completeSale() {
     subtotal: item.price * item.qty
   }));
 
-  const total = items.reduce((sum, item) => sum + item.subtotal, 0);
+  const total = items.reduce((sum, item) =>
+    sum + item.subtotal, 0
+  );
 
   for (const item of cart) {
     const medicine = db.medicines.find(m => m.id === item.id);
@@ -782,9 +805,15 @@ function renderPurchases() {
 
 function renderReports() {
   const sales = db.sales;
-  const total = sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0);
+
+  const total = sales.reduce((sum, sale) =>
+    sum + Number(sale.total || 0), 0
+  );
+
   const units = sales.reduce((sum, sale) =>
-    sum + (sale.items || []).reduce((n, item) => n + Number(item.qty || 0), 0), 0
+    sum + (sale.items || []).reduce((n, item) =>
+      n + Number(item.qty || 0), 0
+    ), 0
   );
 
   if ($("reportTotal")) $("reportTotal").textContent = money(total);
@@ -802,7 +831,9 @@ function renderReports() {
         <tr>
           <td>${escapeHTML(s.date)}</td>
           <td>${escapeHTML(s.customer || "Walk-in")}</td>
-          <td>${(s.items || []).reduce((n, i) => n + Number(i.qty || 0), 0)}</td>
+          <td>${(s.items || []).reduce((n, i) =>
+            n + Number(i.qty || 0), 0
+          )}</td>
           <td>${money(s.total)}</td>
         </tr>`).join("")}
     </tbody></table>`
@@ -831,6 +862,7 @@ function exportData() {
     "pharmadesk-backup.json",
     "application/json"
   );
+
   toast("Data backup downloaded.");
 }
 
@@ -841,16 +873,25 @@ function exportSales() {
     rows.push([
       s.date,
       s.customer || "Walk-in",
-      (s.items || []).reduce((n, i) => n + Number(i.qty || 0), 0),
+      (s.items || []).reduce((n, i) =>
+        n + Number(i.qty || 0), 0
+      ),
       s.total
     ]);
   });
 
   const csv = rows.map(row =>
-    row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")
+    row.map(value =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`
+    ).join(",")
   ).join("\n");
 
-  downloadFile(csv, "pharmadesk-sales.csv", "text/csv;charset=utf-8");
+  downloadFile(
+    csv,
+    "pharmadesk-sales.csv",
+    "text/csv;charset=utf-8"
+  );
+
   toast("Sales CSV downloaded.");
 }
 
@@ -861,18 +902,25 @@ function setupEvents() {
   eventsReady = true;
 
   document.querySelectorAll("[data-page]").forEach(button => {
-    button.addEventListener("click", () => go(button.dataset.page));
+    button.addEventListener("click", () =>
+      go(button.dataset.page)
+    );
   });
 
   document.querySelectorAll("[data-go]").forEach(button => {
-    button.addEventListener("click", () => go(button.dataset.go));
+    button.addEventListener("click", () =>
+      go(button.dataset.go)
+    );
   });
 
   $("menuBtn")?.addEventListener("click", () => {
     $("sidebar")?.classList.toggle("open");
   });
 
-  $("addMedicineBtn")?.addEventListener("click", () => openMedicine());
+  $("addMedicineBtn")?.addEventListener("click", () =>
+    openMedicine()
+  );
+
   $("closeMedicine")?.addEventListener("click", closeMedicine);
   $("cancelMedicine")?.addEventListener("click", closeMedicine);
 
@@ -892,6 +940,7 @@ function setupEvents() {
     if (deleteButton) {
       const id = deleteButton.dataset.delete;
       const medicine = db.medicines.find(m => m.id === id);
+
       if (!medicine) return;
 
       if (!confirm(`Delete ${medicine.name}?`)) return;
@@ -921,7 +970,9 @@ function setupEvents() {
     if (minus) changeCartQty(minus.dataset.cartMinus, -1);
 
     if (remove) {
-      cart = cart.filter(item => item.id !== remove.dataset.cartRemove);
+      cart = cart.filter(item =>
+        item.id !== remove.dataset.cartRemove
+      );
       renderCart();
     }
   });
@@ -955,6 +1006,7 @@ function setupEvents() {
 
 function addLogoutButton() {
   const actions = document.querySelector(".top-actions");
+
   if (!actions || $("logoutBtn")) return;
 
   const button = document.createElement("button");
@@ -1019,9 +1071,10 @@ onAuthStateChanged(auth, async user => {
     await startApp(user);
   } else {
     currentUser = null;
-    confirmationResult = null;
     cart = [];
 
-    if (!$("loginOverlay")) createLogin();
+    if (!$("loginOverlay")) {
+      createLogin();
+    }
   }
 });
