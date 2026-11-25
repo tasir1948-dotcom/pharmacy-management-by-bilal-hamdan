@@ -344,6 +344,20 @@ function go(page) {
 /* ================= DASHBOARD ================= */
 function renderDashboard() {
   const medicines=db.medicines, sales=db.sales.filter(s=>s.date===today());
+  
+const totalStockPayment = medicines.reduce(
+  (total, medicine) => {
+    return total +
+      (Number(medicine.qty || 0) *
+       Number(medicine.cost || 0));
+  },
+  0
+);
+
+if ($("statStockValue")) {
+  $("statStockValue").textContent =
+    money(totalStockPayment);
+}
   const low=medicines.filter(isLow), expiring=medicines.filter(isExpiring);
   if($("statMedicines"))$("statMedicines").textContent=medicines.length;
   if($("statSales"))$("statSales").textContent=money(sales.reduce((n,s)=>n+Number(s.total||0),0));
