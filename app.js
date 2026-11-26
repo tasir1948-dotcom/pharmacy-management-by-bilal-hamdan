@@ -273,13 +273,19 @@ function startAccessMonitoring(user) {
 /* ================= ADMIN ACCESS PANEL ================= */
 function addAdminButton() {
   if (!currentUser || currentUser.uid !== ADMIN_UID) return;
+
   const actions = document.querySelector(".top-actions");
-  if (!actions || $("adminRequestsBtn")) return;
-  const button = document.createElement("button");
-  button.id = "adminRequestsBtn"; button.className = "btn btn-light";
-  button.textContent = "Access Requests";
-  button.addEventListener("click",showAdminRequests);
-  actions.appendChild(button);
+
+  if (actions && !$("adminRequestsBtn")) {
+    const button = document.createElement("button");
+    button.id = "adminRequestsBtn";
+    button.className = "btn btn-light";
+    button.textContent = "Access Requests";
+    button.addEventListener("click", showAdminRequests);
+    actions.appendChild(button);
+  }
+
+  watchOnlineUsers();
 }
 async function showAdminRequests() {
   if (!currentUser || currentUser.uid !== ADMIN_UID) return;
