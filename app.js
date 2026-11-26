@@ -491,11 +491,42 @@ function renderReports() {
   const sales=db.sales;
   const total=sales.reduce((n,s)=>n+Number(s.total||0),0);
   const units=sales.reduce((n,s)=>n+(s.items||[]).reduce((x,i)=>x+Number(i.qty||0),0),0);
+
   if($("reportTotal"))$("reportTotal").textContent=money(total);
   if($("reportCount"))$("reportCount").textContent=sales.length;
   if($("reportUnits"))$("reportUnits").textContent=units;
-  const target=$("salesTable"); if(!target)return;
-  target.innerHTML=sales.length?`<table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th></tr></thead><tbody>${[...sales].reverse().map(s=>`<tr><td>${escapeHTML(s.date)}</td><td>${escapeHTML(s.customer||"Walk-in")}</td><td>${(s.items||[]).reduce((n,i)=>n+Number(i.qty||0),0)}</td><td>${money(s.total)}</td></tr>`).join("")}</tbody></table>`:`<p class="empty-state">No sales recorded yet.</p>`;
+
+  const target=$("salesTable");
+  if(!target)return;
+
+  target.innerHTML=sales.length
+  ? `<table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Customer</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Invoice</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${[...sales].reverse().map(s=>`
+        <tr>
+          <td>${escapeHTML(s.date)}</td>
+          <td>${escapeHTML(s.customer||"Walk-in")}</td>
+          <td>${(s.items||[]).reduce((n,i)=>n+Number(i.qty||0),0)}</td>
+          <td>${money(s.total)}</td>
+          <td>
+            <button class="btn btn-light" data-print-sale="${escapeHTML(s.id)}">
+              Print Invoice
+            </button>
+          </td>
+        </tr>
+      `).join("")}
+    </tbody>
+  </table>`
+  : `<p class="empty-state">No sales recorded yet.</p>`;
 }
 
 /* ================= EXPORT ================= */
@@ -547,6 +578,12 @@ function setupEvents() {
   });
   $("clearCart")?.addEventListener("click",()=>{cart=[];renderCart();});
   $("completeSale")?.addEventListener("click",completeSale);
+  $("salesTable")?.addEventListener("click", event => {
+  const button = event.target.closest("[data-print-sale]");
+  if (!button) return;
+
+  printInvoice(button.dataset.printSale);
+});
   $("purchaseForm")?.addEventListener("submit",savePurchase);
   $("exportTop")?.addEventListener("click",exportData);
   $("exportSales")?.addEventListener("click",exportSales);
