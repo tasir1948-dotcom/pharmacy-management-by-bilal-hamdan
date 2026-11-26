@@ -102,6 +102,7 @@ function addAuthStyles() {
   document.head.appendChild(style);
 }
 function createLogin() {
+  <button id="forgotPasswordBtn" type="button">Forgot Password?</button>
   addAuthStyles();
   if ($("loginOverlay")) return;
   const overlay = document.createElement("div");
