@@ -795,7 +795,9 @@ async function startApp(user) {
       startAccessMonitoring(user);
     } else stopAccessMonitoring();
 
-    $("sidebar")?.style.removeProperty("display");
+await startOnlineStatus(user);
+
+$("sidebar")?.style.removeProperty("display");
     document.querySelector(".main")?.style.removeProperty("display");
     await loadCloud();
     if(thisRun!==authRun||!auth.currentUser||auth.currentUser.uid!==user.uid)return;
