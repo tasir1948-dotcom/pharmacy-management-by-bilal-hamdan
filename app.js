@@ -287,6 +287,40 @@ function addAdminButton() {
 
   watchOnlineUsers();
 }
+/* ================= ADMIN ONLINE USERS ================= */
+let adminOnlineUsersUnsubscribe = null;
+
+function watchOnlineUsers() {
+  if (!currentUser || currentUser.uid !== ADMIN_UID) return;
+
+  const panel = $("onlineUsersPanel");
+  const list = $("onlineUsersList");
+
+  if (!panel || !list) return;
+
+  panel.style.display = "block";
+
+  if (adminOnlineUsersUnsubscribe) {
+    adminOnlineUsersUnsubscribe();
+  }
+
+  adminOnlineUsersUnsubscribe = onValue(
+    ref(database, "onlineUsers"),
+    snapshot => {
+      const users = snapshot.val() || {};
+      const rows = Object.entries(users);
+
+      list.innerHTML = rows.length
+        ? rows.map(([uid, user]) => `
+          <div class="request-row">
+            <b>${escapeHTML(user.email || "Unknown user")}</b>
+            <p>Status: <b>${user.online ? "Online" : "Offline"}</b></p>
+          </div>
+        `).join("")
+        : "<p>No users found.</p>";
+    }
+  );
+}
 async function showAdminRequests() {
   if (!currentUser || currentUser.uid !== ADMIN_UID) return;
   try {
