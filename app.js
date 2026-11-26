@@ -120,6 +120,22 @@ function createLogin() {
   $("loginBtn").addEventListener("click", loginUser);
   $("registerBtn").addEventListener("click", registerUser);
 }
+async function forgotPassword() {
+  const email = $("loginEmail").value.trim();
+
+  if (!email) {
+    $("loginMessage").textContent = "Please enter your email first.";
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    $("loginMessage").textContent =
+      "Password reset link sent to your email.";
+  } catch (error) {
+    $("loginMessage").textContent = error.message;
+  }
+}
 async function loginUser() {
   const email = $("loginEmail").value.trim(), password = $("loginPassword").value;
   const button = $("loginBtn"), message = $("loginMessage");
