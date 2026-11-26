@@ -538,6 +538,33 @@ async function saveMedicine(event) {
     return;
   }
 
+  // Duplicate Protection: Same Name + Same Expiry
+  const duplicate = db.medicines.find(m =>
+    m.id !== id &&
+    String(m.name || "").trim().toLowerCase() ===
+    medicine.name.toLowerCase() &&
+    String(m.expiry || "") === medicine.expiry
+  );
+
+  if (duplicate) {
+    toast("Duplicate! Same medicine name and expiry already exists.");
+    return;
+  }
+
+  const index = db.medicines.findIndex(m => m.id === id);
+
+  if (index >= 0) {
+    db.medicines[index] = medicine;
+  } else {
+    db.medicines.push(medicine);
+  }
+
+  await saveData();
+  closeMedicine();
+  renderAll();
+  toast("Medicine saved successfully.");
+}
+
   const index = db.medicines.findIndex(m => m.id === id);
 
   // Duplicate Medicine Protection
