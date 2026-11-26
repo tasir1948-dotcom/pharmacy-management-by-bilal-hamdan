@@ -518,14 +518,51 @@ function openMedicine(id="") {
 function closeMedicine() { if($("medicineDialog")?.open)$("medicineDialog").close(); }
 async function saveMedicine(event) {
   event.preventDefault();
-  const id=$("medicineId").value||makeId();
-  const medicine={id,name:$("medName").value.trim(),category:$("medCategory").value.trim(),
-    batch:$("medBatch").value.trim(),expiry:$("medExpiry").value,qty:Number($("medQty").value),
-    reorder:Number($("medReorder").value),price:Number($("medPrice").value),cost:Number($("medCost").value||0)};
-  if(!medicine.name||!medicine.expiry){toast("Please complete required fields.");return;}
-  const index=db.medicines.findIndex(m=>m.id===id);
-  if(index>=0)db.medicines[index]=medicine;else db.medicines.push(medicine);
-  await saveData(); closeMedicine(); renderAll(); toast("Medicine saved successfully.");
+
+  const id = $("medicineId").value || makeId();
+
+  const medicine = {
+    id,
+    name: $("medName").value.trim(),
+    category: $("medCategory").value.trim(),
+    batch: $("medBatch").value.trim(),
+    expiry: $("medExpiry").value,
+    qty: Number($("medQty").value),
+    reorder: Number($("medReorder").value),
+    price: Number($("medPrice").value),
+    cost: Number($("medCost").value || 0)
+  };
+
+  if (!medicine.name || !medicine.expiry) {
+    toast("Please complete required fields.");
+    return;
+  }
+
+  const index = db.medicines.findIndex(m => m.id === id);
+
+  // Duplicate Medicine Protection
+  const duplicate = db.medicines.find(m =>
+    m.id !== id &&
+    m.name.trim().toLowerCase() === medicine.name.toLowerCase() &&
+    String(m.batch || "").trim().toLowerCase() === medicine.batch.toLowerCase() &&
+    m.expiry === medicine.expiry
+  );
+
+  if (duplicate) {
+    toast("This medicine with same batch and expiry already exists!");
+    return;
+  }
+
+  if (index >= 0) {
+    db.medicines[index] = medicine;
+  } else {
+    db.medicines.push(medicine);
+  }
+
+  await saveData();
+  closeMedicine();
+  renderAll();
+  toast("Medicine saved successfully.");
 }
 
 /* ================= BILLING ================= */
