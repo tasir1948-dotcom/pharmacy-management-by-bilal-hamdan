@@ -537,7 +537,19 @@ async function saveMedicine(event) {
     toast("Please complete required fields.");
     return;
   }
+const index = db.medicines.findIndex(m => m.id === id);
 
+  if (index >= 0) {
+    db.medicines[index] = medicine;
+  } else {
+    db.medicines.push(medicine);
+  }
+
+  await saveData();
+  closeMedicine();
+  renderAll();
+  toast("Medicine saved successfully.");
+}
 /* ================= BILLING ================= */
 function renderBillProducts() {
   const target=$("billProducts"); if(!target)return;
