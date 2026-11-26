@@ -485,7 +485,123 @@ function renderPurchases() {
   const purchases=[...db.purchases].reverse();
   target.innerHTML=purchases.length?`<table><thead><tr><th>Date</th><th>Medicine</th><th>Quantity</th><th>Supplier</th><th>Total cost</th></tr></thead><tbody>${purchases.map(p=>`<tr><td>${escapeHTML(p.date)}</td><td>${escapeHTML(p.medicineName)}</td><td>${Number(p.quantity)}</td><td>${escapeHTML(p.supplier||"-")}</td><td>${money(p.total)}</td></tr>`).join("")}</tbody></table>`:`<p class="empty-state">No purchases recorded yet.</p>`;
 }
+/* ================= PRINT INVOICE ================= */
+function printInvoice(saleId) {
+  const sale = db.sales.find(s => s.id === saleId);
 
+  if (!sale) {
+    toast("Invoice not found.");
+    return;
+  }
+
+  const invoiceWindow = window.open("", "_blank");
+
+  if (!invoiceWindow) {
+    toast("Please allow popups to print invoice.");
+    return;
+  }
+
+  const items = (sale.items || []).map(item => `
+    <tr>
+      <td>${escapeHTML(item.name)}</td>
+      <td>${Number(item.qty)}</td>
+      <td>Rs ${Number(item.price).toLocaleString("en-PK")}</td>
+      <td>Rs ${Number(item.subtotal ?? item.price * item.qty).toLocaleString("en-PK")}</td>
+    </tr>
+  `).join("");
+
+  invoiceWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>PharmaDesk Invoice</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 25px;
+          color: #222;
+        }
+        .invoice {
+          max-width: 700px;
+          margin: auto;
+        }
+        h1 {
+          text-align: center;
+          color: #123b35;
+        }
+        .info {
+          margin: 25px 0;
+          line-height: 1.8;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          border: 1px solid #ddd;
+          padding: 10px;
+          text-align: left;
+        }
+        th {
+          background: #123b35;
+          color: white;
+        }
+        .total {
+          text-align: right;
+          margin-top: 25px;
+          font-size: 20px;
+          font-weight: bold;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 45px;
+          color: #666;
+        }
+        @media print {
+          button { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="invoice">
+        <h1>PharmaDesk</h1>
+        <h2 style="text-align:center">SALES INVOICE</h2>
+
+        <div class="info">
+          <b>Invoice ID:</b> ${escapeHTML(sale.id)}<br>
+          <b>Date:</b> ${escapeHTML(sale.date)}<br>
+          <b>Customer:</b> ${escapeHTML(sale.customer || "Walk-in")}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>${items}</tbody>
+        </table>
+
+        <div class="total">
+          Total: Rs ${Number(sale.total || 0).toLocaleString("en-PK")}
+        </div>
+
+        <div class="footer">
+          Thank you for your purchase!<br>
+          Powered by PharmaDesk
+        </div>
+
+        <button onclick="window.print()">Print Invoice</button>
+      </div>
+    </body>
+    </html>
+  `);
+
+  invoiceWindow.document.close();
+}
 /* ================= REPORTS ================= */
 function renderReports() {
   const sales=db.sales;
