@@ -296,28 +296,39 @@ function watchOnlineUsers() {
   const panel = $("onlineUsersPanel");
   const list = $("onlineUsersList");
 
-  if (!panel || !list) return;
+  if (!panel || !list) {
+    console.error("Online users HTML elements missing!");
+    return;
+  }
 
   panel.style.display = "block";
+  list.innerHTML = "<p>Loading users...</p>";
 
   if (adminOnlineUsersUnsubscribe) {
     adminOnlineUsersUnsubscribe();
+    adminOnlineUsersUnsubscribe = null;
   }
 
   adminOnlineUsersUnsubscribe = onValue(
     ref(database, "onlineUsers"),
     snapshot => {
+      console.log("Online users data:", snapshot.val());
+
       const users = snapshot.val() || {};
       const rows = Object.entries(users);
 
       list.innerHTML = rows.length
         ? rows.map(([uid, user]) => `
-          <div class="request-row">
-            <b>${escapeHTML(user.email || "Unknown user")}</b>
-            <p>Status: <b>${user.online ? "Online" : "Offline"}</b></p>
-          </div>
-        `).join("")
+            <div class="request-row">
+              <b>${escapeHTML(user.email || "Unknown user")}</b>
+              <p>Status: <b>${user.online ? "Online" : "Offline"}</b></p>
+            </div>
+          `).join("")
         : "<p>No users found.</p>";
+    },
+    error => {
+      console.error("Online users Firebase error:", error);
+      list.innerHTML = "<p>Unable to load users. Check Firebase rules.</p>";
     }
   );
 }
