@@ -118,6 +118,7 @@ function createLogin() {
       <p id="loginMessage"></p>
     </div>`;
   document.body.appendChild(overlay);
+  $("forgotPasswordBtn").addEventListener("click", forgotPassword);
   $("loginBtn").addEventListener("click", loginUser);
   $("registerBtn").addEventListener("click", registerUser);
 }
