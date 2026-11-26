@@ -595,8 +595,7 @@ function printInvoice(saleId) {
         </div>
 
         <button onclick="window.print()">Print Invoice</button>
-
-<button onclick="window.close(); if(window.opener) window.opener.focus();">
+<button onclick="window.close();">
   Back to Home
 </button>
       </div>
