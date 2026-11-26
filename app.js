@@ -24,6 +24,28 @@ const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 const ADMIN_UID = "2G0NYXe6FNOsos45dFLBBEF7b0K3";
+/* ================= USER ONLINE STATUS ================= */
+let onlineUnsubscribe = null;
+
+async function startOnlineStatus(user) {
+  const statusRef = ref(database, `onlineUsers/${user.uid}`);
+
+  try {
+    await onDisconnect(statusRef).set({
+      email: user.email || "",
+      online: false,
+      lastSeen: serverTimestamp()
+    });
+
+    await set(statusRef, {
+      email: user.email || "",
+      online: true,
+      lastSeen: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Online status error:", error);
+  }
+}
 
 /* ================= APP STATE ================= */
 const $ = id => document.getElementById(id);
