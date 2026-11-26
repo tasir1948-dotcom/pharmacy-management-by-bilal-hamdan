@@ -113,6 +113,7 @@ function createLogin() {
       <label>Email address</label><input id="loginEmail" type="email" placeholder="Enter your email" autocomplete="email">
       <label>Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="current-password">
       <button id="loginBtn" type="button">Login</button>
+      <button id="forgotPasswordBtn" type="button">Forgot Password?</button>
       <button id="registerBtn" type="button">Create Account</button>
       <p id="loginMessage"></p>
     </div>`;
