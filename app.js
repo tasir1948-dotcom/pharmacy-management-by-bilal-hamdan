@@ -188,14 +188,30 @@ function showAccessScreen(user,status) {
   $("sidebar")?.style.setProperty("display","none");
   document.querySelector(".main")?.style.setProperty("display","none");
   $("accessOverlay")?.remove();
+
   const info = {
     rejected:["Access Request Rejected","Your access request was rejected. Please contact the administrator."],
-    revoked:["Access Removed","The administrator has removed your access. Your account and saved cloud data have not been deleted."],
-    pending:["Approval Pending","Your account has been created. Please wait for administrator approval."]
-  }[status] || ["Approval Pending","Please wait for administrator approval."];
+    revoked:["Access Removed","The administrator has removed your access."],
+    pending:["Waiting for Admin Approval","Your account has been created. Please wait for administrator approval."]
+  }[status] || ["Waiting for Admin Approval","Please wait for administrator approval."];
+
   const overlay = document.createElement("div");
   overlay.id = "accessOverlay";
-  overlay.innerHTML = `<div class="access-card"><div class="login-logo">✚</div><h2>PharmaDesk</h2><h3>${info[0]}</h3><p>${info[1]}</p><p><b>${escapeHTML(user.email || "")}</b></p><button id="pendingLogoutBtn">Logout</button></div>`;
+  overlay.innerHTML = `
+    <div class="access-card">
+      <div class="login-logo">✚</div>
+      <h2>PharmaDesk</h2>
+      <h3>${info[0]}</h3>
+      <p>${info[1]}</p>
+      <p><b>${escapeHTML(user.email || "")}</b></p>
+      <p>For assistance, contact Admin on WhatsApp:</p>
+      <h3>03239276900</h3>
+      <button onclick="window.open('https://wa.me/923239276900','_blank')">
+        Contact Admin on WhatsApp
+      </button>
+      <button id="pendingLogoutBtn">Logout</button>
+    </div>
+  `;
   document.body.appendChild(overlay);
   $("pendingLogoutBtn").addEventListener("click",() => signOut(auth));
 }
