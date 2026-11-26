@@ -538,35 +538,6 @@ async function saveMedicine(event) {
     return;
   }
 
-  
-
-  const index = db.medicines.findIndex(m => m.id === id);
-
-  // Duplicate Medicine Protection
-  const duplicate = db.medicines.find(m =>
-    m.id !== id &&
-    m.name.trim().toLowerCase() === medicine.name.toLowerCase() &&
-    String(m.batch || "").trim().toLowerCase() === medicine.batch.toLowerCase() &&
-    m.expiry === medicine.expiry
-  );
-
-  if (duplicate) {
-    toast("This medicine with same batch and expiry already exists!");
-    return;
-  }
-
-  if (index >= 0) {
-    db.medicines[index] = medicine;
-  } else {
-    db.medicines.push(medicine);
-  }
-
-  await saveData();
-  closeMedicine();
-  renderAll();
-  toast("Medicine saved successfully.");
-}
-
 /* ================= BILLING ================= */
 function renderBillProducts() {
   const target=$("billProducts"); if(!target)return;
