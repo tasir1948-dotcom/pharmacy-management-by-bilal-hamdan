@@ -42,6 +42,19 @@
   <small>Current stock purchase value</small>
         </article>
       </div>
+      <article class="panel" id="onlineUsersPanel" style="display:none;">
+  <div class="panel-heading">
+    <div>
+      <h3>Online Users</h3>
+      <p>Users currently using PharmaDesk</p>
+    </div>
+  </div>
+  <div id="onlineUsersList">
+    Loading users...
+  </div>
+</article>
+
+<div class="content-grid">
       <div class="content-grid">
         <article class="panel"><div class="panel-heading"><div><h3>Stock alerts</h3><p>Items that may need attention</p></div><button class="text-btn" data-go="inventory">View inventory →</button></div><div id="dashboardAlerts" class="table-wrap"></div></article>
         <article class="panel quick-panel"><div class="panel-heading"><div><h3>Quick actions</h3><p>Common pharmacy tasks</p></div></div><button class="quick-action" data-go="billing"><span class="quick-icon">▣</span><span><b>Create a bill</b><small>Record a customer sale</small></span><i>→</i></button><button class="quick-action" data-go="inventory"><span class="quick-icon">＋</span><span><b>Add medicine</b><small>Update your stock list</small></span><i>→</i></button><button class="quick-action" data-go="purchases"><span class="quick-icon">▤</span><span><b>Record purchase</b><small>Restock from supplier</small></span><i>→</i></button></article>
