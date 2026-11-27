@@ -532,6 +532,8 @@ if ($("statStockValue")) {
     money(totalStockPayment);
 }
   const low=medicines.filter(isLow), expiring=medicines.filter(isExpiring);
+  const urgentExpiry = medicines.filter(isUrgentExpiring);
+const expiredMedicines = medicines.filter(isExpired);
   if($("statMedicines"))$("statMedicines").textContent=medicines.length;
   if($("statSales"))$("statSales").textContent=money(sales.reduce((n,s)=>n+Number(s.total||0),0));
   if($("statSaleCount"))$("statSaleCount").textContent=`${sales.length} transactions`;
