@@ -591,6 +591,7 @@ function renderInventory() {
   if(filter==="low")items=items.filter(isLow);
   if(filter==="expired")items=items.filter(isExpired);
   if(filter==="expiring")items=items.filter(isExpiring);
+  if(filter==="urgent")items=items.filter(isUrgentExpiring);
   const target=$("inventoryTable"); if(!target)return;
   target.innerHTML=items.length
     ? `<table><thead><tr><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Stock</th><th>Sale price</th><th>Actions</th></tr></thead><tbody>${items.map(m=>`
