@@ -1088,27 +1088,3 @@ function exportSalesPDF() {
   );
 }
 
-function exportPurchasePDF() {
-  const rows = (db.purchases || []).map(p => [
-    p.date || "",
-    p.name || p.medicine || "",
-    p.qty || 0,
-    p.total || p.amount || 0
-  ]);
-
-  const total = rows.reduce(
-    (n, r) => n + Number(r[3] || 0), 0
-  );
-
-  createProfessionalPDF(
-    "Purchase Report",
-    ["Date", "Medicine", "Quantity", "Amount (Rs)"],
-    rows,
-    "pharmadesk-purchases.pdf",
-    total
-  );
-}
-
-$("exportStockPDF")?.addEventListener("click", exportStockPDF);
-$("exportSalesPDF")?.addEventListener("click", exportSalesPDF);
-$("exportPurchasePDF")?.addEventListener("click", exportPurchasePDF);
