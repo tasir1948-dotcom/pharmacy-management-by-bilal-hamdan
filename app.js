@@ -1017,16 +1017,112 @@ onAuthStateChanged(auth,async user=>{
     createLogin();
   }
 });
+function createProfessionalPDF(title, headers, rows, filename, total) {
+  if (!window.jspdf?.jsPDF) {
+    toast("PDF library not loaded. Refresh page.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFillColor(18, 59, 53);
+  doc.rect(0, 0, 210, 32, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.text("PharmaDesk", 14, 14);
+
+  doc.setFontSize(12);
+  doc.text(title, 14, 24);
+
+  doc.setTextColor(70, 70, 70);
+  doc.setFontSize(10);
+  doc.text("Generated: " + new Date().toLocaleString(), 14, 42);
+
+  doc.autoTable({
+    startY: 50,
+    head: [headers],
+    body: rows,
+    theme: "grid",
+    headStyles: {
+      fillColor: [23, 107, 87]
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 4
+    }
+  });
+
+  let finalY = doc.lastAutoTable.finalY + 12;
+
+  if (total !== null) {
+    doc.setFontSize(12);
+    doc.setTextColor(18, 59, 53);
+    doc.text("Total: Rs " + total, 14, finalY);
+  }
+
+  doc.save(filename);
+  toast(title + " downloaded successfully.");
+}
+
 function exportStockPDF() {
-  toast("Stock PDF feature is being connected.");
+  const rows = (db.medicines || []).map(m => [
+    m.name || "",
+    m.qty || 0,
+    m.reorder || 0,
+    m.expiry || ""
+  ]);
+
+  createProfessionalPDF(
+    "Medicine Stock Report",
+    ["Medicine", "Quantity", "Reorder Level", "Expiry"],
+    rows,
+    "pharmadesk-stock.pdf",
+    null
+  );
 }
 
 function exportSalesPDF() {
-  toast("Sales PDF feature is being connected.");
+  const rows = (db.sales || []).map(s => [
+    s.date || "",
+    s.customer || "Walk-in",
+    (s.items || []).reduce((n, i) => n + Number(i.qty || 0), 0),
+    s.total || 0
+  ]);
+
+  const total = (db.sales || []).reduce(
+    (n, s) => n + Number(s.total || 0), 0
+  );
+
+  createProfessionalPDF(
+    "Sales Report",
+    ["Date", "Customer", "Units", "Total (Rs)"],
+    rows,
+    "pharmadesk-sales.pdf",
+    total
+  );
 }
 
 function exportPurchasePDF() {
-  toast("Purchase PDF feature is being connected.");
+  const rows = (db.purchases || []).map(p => [
+    p.date || "",
+    p.name || p.medicine || "",
+    p.qty || 0,
+    p.total || p.amount || 0
+  ]);
+
+  const total = rows.reduce(
+    (n, r) => n + Number(r[3] || 0), 0
+  );
+
+  createProfessionalPDF(
+    "Purchase Report",
+    ["Date", "Medicine", "Quantity", "Amount (Rs)"],
+    rows,
+    "pharmadesk-purchases.pdf",
+    total
+  );
 }
 
 $("exportStockPDF")?.addEventListener("click", exportStockPDF);
