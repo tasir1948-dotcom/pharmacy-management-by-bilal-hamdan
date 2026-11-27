@@ -584,14 +584,13 @@ if ($("dashboardAlerts")) {
 }
 function openInventoryFilter(filter) {
   const select = $("stockFilter");
-  if (select) select.value = filter;
 
-  const inventoryNav = document.querySelector('[data-page="inventory"]');
-  if (inventoryNav) inventoryNav.click();
+  if (select) {
+    select.value = filter;
+  }
 
-  renderInventory();
+  go("inventory");
 }
-
 /* ================= INVENTORY ================= */
 function renderInventory() {
   const search=($("inventorySearch")?.value||"").toLowerCase(), filter=$("stockFilter")?.value||"all";
