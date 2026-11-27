@@ -486,7 +486,7 @@ function go(page) {
 /* ================= DASHBOARD ================= */
 function renderDashboard() {
   const medicines=db.medicines, sales=db.sales.filter(s=>s.date===today());
-  
+renderStockDonut();  
 const totalStockPayment = medicines.reduce(
   (total, medicine) => {
     return total +
