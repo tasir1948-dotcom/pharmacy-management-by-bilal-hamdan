@@ -1018,7 +1018,7 @@ onAuthStateChanged(auth,async user=>{
   }
 });
 function createProfessionalPDF(title, headers, rows, filename, total) {
-  if (!window.jspdf?.jsPDF) {
+if (!window.jspdf || !window.jspdf.jsPDF) {
     toast("PDF library not loaded. Refresh page.");
     return;
   }
