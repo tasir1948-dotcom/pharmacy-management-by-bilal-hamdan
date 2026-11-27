@@ -1027,8 +1027,12 @@ onAuthStateChanged(auth,async user=>{
   }
 });
 function createProfessionalPDF(title, headers, rows, filename, total) {
-  const doc = new jsPDF(
-    const doc = new jsPDF();
+const JsPDF = window.jspdf?.jsPDF;
+if (!JsPDF) {
+  toast("PDF library missing.");
+  return;
+}
+const doc = new JsPDF();
 
   doc.setFillColor(18, 59, 53);
   doc.rect(0, 0, 210, 32, "F");
