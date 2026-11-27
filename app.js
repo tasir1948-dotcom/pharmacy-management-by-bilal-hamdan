@@ -1017,3 +1017,18 @@ onAuthStateChanged(auth,async user=>{
     createLogin();
   }
 });
+function exportStockPDF() {
+  toast("Stock PDF feature is being connected.");
+}
+
+function exportSalesPDF() {
+  toast("Sales PDF feature is being connected.");
+}
+
+function exportPurchasePDF() {
+  toast("Purchase PDF feature is being connected.");
+}
+
+$("exportStockPDF")?.addEventListener("click", exportStockPDF);
+$("exportSalesPDF")?.addEventListener("click", exportSalesPDF);
+$("exportPurchasePDF")?.addEventListener("click", exportPurchasePDF);
