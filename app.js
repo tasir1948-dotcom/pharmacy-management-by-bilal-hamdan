@@ -990,6 +990,17 @@ $("sidebar")?.style.removeProperty("display");
     showAccessError("Could not verify your account or load cloud data. Check your internet connection and Firebase database rules.");
   }
 }
+document.getElementById("statLow")?.addEventListener("click", () => {
+  openInventoryFilter("low");
+});
+
+document.getElementById("statExpired")?.addEventListener("click", () => {
+  openInventoryFilter("expired");
+});
+
+document.getElementById("statUrgentExpiry")?.addEventListener("click", () => {
+  openInventoryFilter("urgent");
+});
 
 /* ================= AUTH LISTENER ================= */
 addAuthStyles();
