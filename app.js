@@ -582,6 +582,15 @@ if ($("dashboardAlerts")) {
       : `<p class="empty-state">No sales recorded yet.</p>`;
   }
 }
+function openInventoryFilter(filter) {
+  const select = $("stockFilter");
+  if (select) select.value = filter;
+
+  const inventoryNav = document.querySelector('[data-page="inventory"]');
+  if (inventoryNav) inventoryNav.click();
+
+  renderInventory();
+}
 
 /* ================= INVENTORY ================= */
 function renderInventory() {
