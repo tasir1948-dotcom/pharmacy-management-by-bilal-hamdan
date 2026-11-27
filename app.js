@@ -441,19 +441,31 @@ function renderStockDonut() {
   const medicines = db.medicines;
   const total = medicines.length;
 
-  const low = medicines.filter(isLow).length;
-  const available = total - low;
+  const expired = medicines.filter(m =>
+    m.expiry && m.expiry < today()
+  ).length;
+
+  const activeMedicines = medicines.filter(m =>
+    !m.expiry || m.expiry >= today()
+  );
+
+  const low = activeMedicines.filter(isLow).length;
+  const available = total - expired - low;
 
   const availablePercent = total
     ? Math.round((available / total) * 100)
     : 0;
 
   const lowPercent = total
-    ? 100 - availablePercent
+    ? Math.round((low / total) * 100)
+    : 0;
+
+  const expiredPercent = total
+    ? 100 - availablePercent - lowPercent
     : 0;
 
   if ($("stockPercent"))
-    $("stockPercent").textContent = availablePercent + "%";
+    $("stockPercent").textContent = total;
 
   if ($("availablePercent"))
     $("availablePercent").textContent = availablePercent + "%";
@@ -461,15 +473,20 @@ function renderStockDonut() {
   if ($("lowPercent"))
     $("lowPercent").textContent = lowPercent + "%";
 
+  if ($("expiredPercent"))
+    $("expiredPercent").textContent = expiredPercent + "%";
+
   const chart = $("stockDonut");
 
   if (chart) {
     chart.style.background = `conic-gradient(
       #16a34a 0% ${availablePercent}%,
-      #f59e0b ${availablePercent}% 100%
+      #f59e0b ${availablePercent}% ${availablePercent + lowPercent}%,
+      #ef4444 ${availablePercent + lowPercent}% 100%
     )`;
   }
 }
+    
 
 /* ================= NAVIGATION ================= */
 function go(page) {
