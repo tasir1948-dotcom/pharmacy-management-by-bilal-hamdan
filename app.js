@@ -436,6 +436,40 @@ function daysUntil(dateString) {
 function isExpired(m) { return daysUntil(m.expiry)<0; }
 function isExpiring(m) { const d=daysUntil(m.expiry); return d>=0 && d<=90; }
 function isLow(m) { return Number(m.qty)<=Number(m.reorder); }
+/* ================= MEDICINE STOCK DONUT GRAPH ================= */
+function renderStockDonut() {
+  const medicines = db.medicines;
+  const total = medicines.length;
+
+  const low = medicines.filter(isLow).length;
+  const available = total - low;
+
+  const availablePercent = total
+    ? Math.round((available / total) * 100)
+    : 0;
+
+  const lowPercent = total
+    ? 100 - availablePercent
+    : 0;
+
+  if ($("stockPercent"))
+    $("stockPercent").textContent = availablePercent + "%";
+
+  if ($("availablePercent"))
+    $("availablePercent").textContent = availablePercent + "%";
+
+  if ($("lowPercent"))
+    $("lowPercent").textContent = lowPercent + "%";
+
+  const chart = $("stockDonut");
+
+  if (chart) {
+    chart.style.background = `conic-gradient(
+      #16a34a 0% ${availablePercent}%,
+      #f59e0b ${availablePercent}% 100%
+    )`;
+  }
+}
 
 /* ================= NAVIGATION ================= */
 function go(page) {
