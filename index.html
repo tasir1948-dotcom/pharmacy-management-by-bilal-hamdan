@@ -58,15 +58,15 @@
   <div class="panel-heading">
     <div>
       <h3>Medicine Stock Overview</h3>
-      <p>Available and low stock percentage</p>
+      <p>Available, Low Stock & Expired Medicines</p>
     </div>
   </div>
 
   <div class="stock-chart-container">
     <div class="donut-chart" id="stockDonut">
       <div class="donut-center">
-        <strong id="stockPercent">0%</strong>
-        <small>Available</small>
+        <strong id="stockPercent">0</strong>
+        <small>Total Medicines</small>
       </div>
     </div>
 
@@ -75,7 +75,10 @@
         Available <b id="availablePercent">0%</b>
       </p>
       <p><span class="legend-dot low"></span>
-        Low stock <b id="lowPercent">0%</b>
+        Low Stock <b id="lowPercent">0%</b>
+      </p>
+      <p><span class="legend-dot expired"></span>
+        Expired <b id="expiredPercent">0%</b>
       </p>
     </div>
   </div>
