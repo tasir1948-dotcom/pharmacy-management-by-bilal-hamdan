@@ -539,6 +539,8 @@ const expiredMedicines = medicines.filter(isExpired);
   if($("statSaleCount"))$("statSaleCount").textContent=`${sales.length} transactions`;
   if($("statLow"))$("statLow").textContent=low.length;
   if($("statExpiry"))$("statExpiry").textContent=expiring.length;
+  if($("statUrgentExpiry"))$("statUrgentExpiry").textContent=urgentExpiry.length;
+if($("statExpired"))$("statExpired").textContent=expiredMedicines.length;
   const alerts=medicines.filter(m=>isLow(m)||isExpired(m)||isExpiring(m));
   if($("dashboardAlerts"))$("dashboardAlerts").innerHTML=alerts.length
     ? `<table><thead><tr><th>Medicine</th><th>Stock</th><th>Status</th></tr></thead><tbody>${alerts.slice(0,8).map(m=>`<tr><td>${escapeHTML(m.name)}</td><td>${Number(m.qty)}</td><td>${isExpired(m)?"Expired":isLow(m)?"Low stock":"Expiring soon"}</td></tr>`).join("")}</tbody></table>`
