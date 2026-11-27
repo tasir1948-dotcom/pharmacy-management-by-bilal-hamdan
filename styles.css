@@ -71,6 +71,26 @@
   border-radius: 50%;
   display: inline-block;
 }
+/* EXPIRY ALERT CARDS */
+#statUrgentExpiry {
+  color: #dc2626;
+}
+
+#statExpired {
+  color: #991b1b;
+}
+
+#dashboardAlerts table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#dashboardAlerts th,
+#dashboardAlerts td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e7eeeb;
+}
 
 .legend-dot.available { background: #16a34a; }
 .legend-dot.low { background: #f59e0b; }
