@@ -433,9 +433,23 @@ function daysUntil(dateString) {
   if (!dateString) return Infinity;
   return Math.ceil((new Date(dateString+"T00:00:00")-new Date(today()+"T00:00:00"))/86400000);
 }
-function isExpired(m) { return daysUntil(m.expiry)<0; }
-function isExpiring(m) { const d=daysUntil(m.expiry); return d>=0 && d<=90; }
-function isLow(m) { return Number(m.qty)<=Number(m.reorder); }
+function isExpired(m) {
+  return daysUntil(m.expiry) < 0;
+}
+
+function isUrgentExpiring(m) {
+  const d = daysUntil(m.expiry);
+  return d >= 0 && d <= 7;
+}
+
+function isExpiring(m) {
+  const d = daysUntil(m.expiry);
+  return d >= 0 && d <= 30;
+}
+
+function isLow(m) {
+  return Number(m.qty) <= Number(m.reorder);
+}
 /* ================= MEDICINE STOCK DONUT GRAPH ================= */
 function renderStockDonut() {
   const medicines = db.medicines;
