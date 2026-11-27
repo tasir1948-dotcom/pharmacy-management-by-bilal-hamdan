@@ -112,22 +112,30 @@
       <article class="panel"><div class="panel-heading"><div><h3>Recent sales</h3><p>Latest transactions</p></div><button class="text-btn" data-go="reports">All reports →</button></div><div id="recentSales" class="table-wrap"></div></article>
     </section>
 
-    <section class="page" id="page-inventory">
-      <div class="page-toolbar"><div><h2>Medicine inventory</h2><p>Manage products, quantities and expiry dates.</p></div><button class="btn btn-primary" id="addMedicineBtn">＋ Add medicine</button></div>
-      <div class="filter-row"><input id="inventorySearch" class="search" placeholder="Search by medicine, category or batch…"><select id="stockFilter"><option value="all">All stock</option><option value="low">Low stock</option><option value="expired">Expired</option><option value="expiring"><option value="expiring">Expiring in 30 days</option>
-<div class="filter-row">
-  <input id="inventorySearch" class="search" placeholder="Search by medicine, category or batch…">
+   <section class="page" id="page-inventory">
+  <div class="page-toolbar">
+    <div>
+      <h2>Medicine inventory</h2>
+      <p>Manage products, quantities and expiry dates.</p>
+    </div>
+    <button class="btn btn-primary" id="addMedicineBtn">＋ Add medicine</button>
+  </div>
 
-  <select id="stockFilter">
-    <option value="all">All stock</option>
-    <option value="low">Low stock</option>
-    <option value="expired">Expired</option>
-    <option value="expiring">Expiring in 30 days</option>
-    <option value="urgent">Urgent Expiry (7 days)</option>
-  </select>
-</div>
-      <article class="panel table-panel"><div id="inventoryTable" class="table-wrap"></div></article>
-    </section>
+  <div class="filter-row">
+    <input id="inventorySearch" class="search" placeholder="Search by medicine, category or batch…">
+    <select id="stockFilter">
+      <option value="all">All stock</option>
+      <option value="low">Low stock</option>
+      <option value="expired">Expired</option>
+      <option value="expiring">Expiring in 30 days</option>
+      <option value="urgent">Urgent Expiry (7 days)</option>
+    </select>
+  </div>
+
+  <article class="panel table-panel">
+    <div id="inventoryTable" class="table-wrap"></div>
+  </article>
+</section>
 
     <section class="page" id="page-billing">
       <div class="page-toolbar"><div><h2>Sales & billing</h2><p>Create a sale and automatically update stock.</p></div><span class="soft-chip">New transaction</span></div>
@@ -135,7 +143,7 @@
         <article class="panel"><h3>Add items</h3><p class="muted">Search and add available medicines to the bill.</p><input id="billSearch" class="search full" placeholder="Search medicine…"><div id="billProducts" class="product-list"></div></article>
         <article class="panel bill-panel"><div class="panel-heading"><div><h3>Current bill</h3><p id="billDate"></p></div><button class="text-btn" id="clearCart">Clear</button></div><label class="field-label" for="customerName">Customer name (optional)</label><input id="customerName" class="field" placeholder="Walk-in customer"><div id="cartItems" class="cart-items"></div><div class="bill-total"><span>Total amount</span><strong id="billTotal">Rs 0</strong></div><button class="btn btn-primary btn-wide" id="completeSale">Complete sale</button><small class="hint">Only complete a sale after confirming the items and quantities.</small></article>
       </div>
-    </section>
+    </section
 
     <section class="page" id="page-purchases">
       <div class="page-toolbar"><div><h2>Purchase entry</h2><p>Record stock received from a supplier.</p></div></div>
