@@ -1035,20 +1035,19 @@ function createProfessionalPDF(title, headers, rows, filename, total) {
   doc.setTextColor(70, 70, 70);
   doc.setFontSize(10);
   doc.text("Generated: " + new Date().toLocaleString(), 14, 42);
-
-  doc.autoTable({
-    startY: 50,
-    head: [headers],
-    body: rows,
-    theme: "grid",
-    headStyles: {
-      fillColor: [23, 107, 87]
-    },
-    styles: {
-      fontSize: 9,
-      cellPadding: 4
-    }
-  });
+autoTable(doc, {
+  startY: 50,
+  head: [headers],
+  body: rows,
+  theme: "grid",
+  headStyles: {
+    fillColor: [23, 107, 87]
+  },
+  styles: {
+    fontSize: 9,
+    cellPadding: 4
+  }
+});
 
   let finalY = doc.lastAutoTable.finalY + 12;
 
