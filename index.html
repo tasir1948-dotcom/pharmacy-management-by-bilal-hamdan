@@ -148,7 +148,12 @@
     </section>
 
     <section class="page" id="page-reports">
-      <div class="page-toolbar"><div><h2>Reports</h2><p>Review recorded sales and pharmacy activity.</p></div><button class="btn btn-light" id="exportSales">Download sales CSV</button></div>
+      <div class="page-toolbar"><div><h2>Reports</h2><p>Review recorded sales and pharmacy activity.</p></div><div class="row gap-2">
+  <button class="btn btn-light" id="exportStockPDF">Stock PDF</button>
+  <button class="btn btn-light" id="exportSalesPDF">Sales PDF</button>
+  <button class="btn btn-light" id="exportPurchasePDF">Purchase PDF</button>
+  <button class="btn btn-light" id="exportSales">Download sales CSV</button>
+</div></div>
       <div class="stats-grid report-stats"><article class="stat-card"><span>Total sales recorded</span><strong id="reportTotal">Rs 0</strong><small>All saved transactions</small></article><article class="stat-card"><span>Transactions</span><strong id="reportCount">0</strong><small>Number of sales</small></article><article class="stat-card"><span>Units sold</span><strong id="reportUnits">0</strong><small>Across all transactions</small></article></div>
       <article class="panel"><div class="panel-heading"><div><h3>Sales history</h3><p>Saved transactions on this device</p></div></div><div id="salesTable" class="table-wrap"></div></article>
     </section>
