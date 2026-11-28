@@ -656,6 +656,14 @@ barcode: $("medBarcode").value.trim()
     toast("Please complete required fields.");
     return;
   }
+  const barcode = medicine.barcode;
+
+if (barcode && db.medicines.some(m =>
+  m.barcode === barcode && m.id !== id
+)) {
+  toast("This barcode is already assigned to another medicine.");
+  return;
+}
 const index = db.medicines.findIndex(m => m.id === id);
 
   if (index >= 0) {
