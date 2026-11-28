@@ -630,6 +630,7 @@ function openMedicine(id="") {
   $("medBatch").value=m?.batch||""; $("medExpiry").value=m?.expiry||"";
   $("medQty").value=m?.qty??0; $("medReorder").value=m?.reorder??10;
   $("medPrice").value=m?.price??""; $("medCost").value=m?.cost??0;
+  $("medBarcode").value=m?.barcode||"";
   $("medicineDialog").showModal();
 }
 function closeMedicine() { if($("medicineDialog")?.open)$("medicineDialog").close(); }
