@@ -424,7 +424,8 @@ async function loadCloud() {
   if (local) {
     try {
       db = normalizeData(JSON.parse(local));
-      const hasData = db.medicines.length || db.sales.length || db.purchases.length;
+      const hasData = db.medicines.length || db.sales.length ||
+  db.purchases.length || Object.keys(db.settings || {}).length;
       if (hasData) await set(ref(database,cloudPath()),db);
     } catch(error) { console.error("Local data read:",error); db=normalizeData({}); }
   } else db=normalizeData({});
