@@ -464,9 +464,6 @@ function saveInvoiceSettings(event) {
   saveData();
   toast("Invoice settings saved successfully.");
 }
-  saveData();
-  toast("Invoice settings saved successfully.");
-}
 /* ================= DATE / STOCK HELPERS ================= */
 function daysUntil(dateString) {
   if (!dateString) return Infinity;
