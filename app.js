@@ -1085,6 +1085,8 @@ $("barcodeSearch")?.addEventListener("input", () => {
   printInvoice(button.dataset.printSale);
 });
   $("purchaseForm")?.addEventListener("submit",savePurchase);
+  $("invoiceSettingsForm")?.addEventListener("submit",saveInvoiceSettings);
+loadInvoiceSettings();
   $("exportTop")?.addEventListener("click",exportData);
   $("exportSales")?.addEventListener("click",exportSales);
   if($("todayLabel"))$("todayLabel").textContent=new Date().toLocaleDateString("en-PK",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
