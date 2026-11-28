@@ -151,6 +151,9 @@
       <article class="panel form-panel"><form id="purchaseForm" class="form-grid">
         <label>Medicine<select id="purchaseMedicine" required></select></label>
         <label>Quantity received<input id="purchaseQty" type="number" min="1" step="1" required placeholder="e.g. 50"></label>
+        <label>Expiry Date
+  <input id="purchaseExpiry" type="date" required>
+</label>
         <label>Supplier name<input id="purchaseSupplier" placeholder="Supplier / distributor"></label>
         <label>Purchase cost per unit (Rs)<input id="purchaseCost" type="number" min="0" step="0.01" placeholder="Optional"></label>
         <div class="form-actions"><button class="btn btn-primary" type="submit">Save purchase</button></div>
