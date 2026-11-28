@@ -692,6 +692,26 @@ function addToCart(id) {
   else cart.push({id:m.id,name:m.name,price:Number(m.price),qty:1});
   renderCart();
 }
+function scanMedicineBarcode() {
+  const input = $("barcodeSearch");
+  const barcode = input?.value.trim();
+
+  if (!barcode) return;
+
+  const medicine = db.medicines.find(
+    m => String(m.barcode || "").trim() === barcode
+  );
+
+  if (!medicine) {
+    toast("Medicine barcode not found.");
+    input.select();
+    return;
+  }
+
+  addToCart(medicine.id);
+  input.value = "";
+  input.focus();
+}
 function renderCart() {
   const target=$("cartItems"); if(!target)return;
   target.innerHTML=cart.length?cart.map(i=>`<div class="cart-item"><div><b>${escapeHTML(i.name)}</b><small>${money(i.price)} each</small></div><div><button data-cart-minus="${escapeHTML(i.id)}">−</button><span>${i.qty}</span><button data-cart-plus="${escapeHTML(i.id)}">+</button><button data-cart-remove="${escapeHTML(i.id)}">×</button></div></div>`).join(""):`<p class="empty-state">Your bill is empty.</p>`;
