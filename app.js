@@ -648,7 +648,8 @@ async function saveMedicine(event) {
     qty: Number($("medQty").value),
     reorder: Number($("medReorder").value),
     price: Number($("medPrice").value),
-    cost: Number($("medCost").value || 0)
+   cost: Number($("medCost").value || 0),
+barcode: $("medBarcode").value.trim()
   };
 
   if (!medicine.name || !medicine.expiry) {
