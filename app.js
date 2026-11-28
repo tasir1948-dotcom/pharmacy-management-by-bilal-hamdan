@@ -965,6 +965,12 @@ function setupEvents() {
     }
   });
   $("billSearch")?.addEventListener("input",renderBillProducts);
+  $("barcodeSearch")?.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    scanMedicineBarcode();
+  }
+});
   $("billProducts")?.addEventListener("click",e=>{const b=e.target.closest("[data-add-cart]");if(b)addToCart(b.dataset.addCart);});
   $("cartItems")?.addEventListener("click",e=>{
     const plus=e.target.closest("[data-cart-plus]"), minus=e.target.closest("[data-cart-minus]"), remove=e.target.closest("[data-cart-remove]");
