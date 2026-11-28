@@ -172,7 +172,40 @@
       <div class="stats-grid report-stats"><article class="stat-card"><span>Total sales recorded</span><strong id="reportTotal">Rs 0</strong><small>All saved transactions</small></article><article class="stat-card"><span>Transactions</span><strong id="reportCount">0</strong><small>Number of sales</small></article><article class="stat-card"><span>Units sold</span><strong id="reportUnits">0</strong><small>Across all transactions</small></article></div>
       <article class="panel"><div class="panel-heading"><div><h3>Sales history</h3><p>Saved transactions on this device</p></div></div><div id="salesTable" class="table-wrap"></div></article>
     </section>
+<section class="page" id="page-settings">
+  <div class="page-toolbar">
+    <div>
+      <h2>Invoice Settings</h2>
+      <p>Customize your pharmacy details on printed invoices.</p>
+    </div>
+  </div>
 
+  <article class="panel form-panel">
+    <form id="invoiceSettingsForm" class="form-grid">
+
+      <label>Pharmacy / Clinic Name
+        <input id="invoiceClinicName" type="text" placeholder="Enter pharmacy name">
+      </label>
+
+      <label>Contact Number
+        <input id="invoiceContact" type="tel" placeholder="03XXXXXXXXX">
+      </label>
+
+      <label>WhatsApp Number
+        <input id="invoiceWhatsapp" type="tel" placeholder="03XXXXXXXXX">
+      </label>
+
+      <label>Address
+        <input id="invoiceAddress" type="text" placeholder="Enter pharmacy address">
+      </label>
+
+      <div>
+        <button type="submit" class="btn btn-primary">Save Invoice Settings</button>
+      </div>
+
+    </form>
+  </article>
+</section>
     <footer>PharmaDesk demo · Keep your records accurate and protect customer privacy.</footer>
   </main>
 
