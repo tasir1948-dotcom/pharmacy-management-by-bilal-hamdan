@@ -1083,7 +1083,7 @@ $("barcodeSearch")?.addEventListener("input", () => {
 });
   $("purchaseForm")?.addEventListener("submit",savePurchase);
   $("invoiceSettingsForm")?.addEventListener("submit",saveInvoiceSettings);
-loadInvoiceSettings();
+if ($("invoiceSettingsForm")) loadInvoiceSettings();
   $("exportTop")?.addEventListener("click",exportData);
   $("exportSales")?.addEventListener("click",exportSales);
   if($("todayLabel"))$("todayLabel").textContent=new Date().toLocaleDateString("en-PK",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
