@@ -970,9 +970,13 @@ function setupEvents() {
 $("barcodeSearch")?.addEventListener("input", () => {
   clearTimeout(barcodeTimer);
 
+  const input = $("barcodeSearch");
+
+  if (!input.value.trim()) return;
+
   barcodeTimer = setTimeout(() => {
     scanMedicineBarcode();
-  }, 300);
+  }, 1000);
 });
   $("billProducts")?.addEventListener("click",e=>{const b=e.target.closest("[data-add-cart]");if(b)addToCart(b.dataset.addCart);});
   $("cartItems")?.addEventListener("click",e=>{
