@@ -76,7 +76,10 @@ function normalizeData(data) {
   return {
     medicines: Array.isArray(data?.medicines) ? data.medicines : [],
     sales: Array.isArray(data?.sales) ? data.sales : [],
-    purchases: Array.isArray(data?.purchases) ? data.purchases : []
+    purchases: Array.isArray(data?.purchases) ? data.purchases : [],
+    settings: data?.settings && typeof data.settings === "object"
+      ? data.settings
+      : {}
   };
 }
 function money(value) {
