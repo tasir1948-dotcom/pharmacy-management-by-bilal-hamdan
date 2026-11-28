@@ -440,7 +440,30 @@ function saveData() {
     .catch(error=>{console.error(error);toast("Cloud save failed. Check internet or database rules.");});
   return saveQueue;
 }
+/* ================= INVOICE SETTINGS ================= */
+function loadInvoiceSettings() {
+  const settings = db.settings || {};
 
+  $("invoiceClinicName").value = settings.clinicName || "";
+  $("invoiceContact").value = settings.contact || "";
+  $("invoiceWhatsapp").value = settings.whatsapp || "";
+  $("invoiceAddress").value = settings.address || "";
+}
+
+function saveInvoiceSettings(event) {
+  event.preventDefault();
+
+  db.settings = {
+    ...(db.settings || {}),
+    clinicName: $("invoiceClinicName").value.trim(),
+    contact: $("invoiceContact").value.trim(),
+    whatsapp: $("invoiceWhatsapp").value.trim(),
+    address: $("invoiceAddress").value.trim()
+  };
+
+  saveData();
+  toast("Invoice settings saved successfully.");
+}
 /* ================= DATE / STOCK HELPERS ================= */
 function daysUntil(dateString) {
   if (!dateString) return Infinity;
