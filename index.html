@@ -140,7 +140,8 @@
     <section class="page" id="page-billing">
       <div class="page-toolbar"><div><h2>Sales & billing</h2><p>Create a sale and automatically update stock.</p></div><span class="soft-chip">New transaction</span></div>
       <div class="billing-layout">
-        <article class="panel"><h3>Add items</h3><p class="muted">Search and add available medicines to the bill.</p><input id="billSearch" class="search full" placeholder="Search medicine…"><div id="billProducts" class="product-list"></div></article>
+        <article class="panel"><h3>Add items</h3><p class="muted">Search and add available medicines to the bill.</p><input id="billSearch" class="search full" placeholder="Search medicine…"><label class="field-label" for="barcodeSearch">Scan Medicine Barcode</label>
+<input id="barcodeSearch" class="search full" type="text" placeholder="Scan barcode here..." autocomplete="off"><div id="billProducts" class="product-list"></div></article>
         <article class="panel bill-panel"><div class="panel-heading"><div><h3>Current bill</h3><p id="billDate"></p></div><button class="text-btn" id="clearCart">Clear</button></div><label class="field-label" for="customerName">Customer name (optional)</label><input id="customerName" class="field" placeholder="Walk-in customer"><div id="cartItems" class="cart-items"></div><div class="bill-total"><span>Total amount</span><strong id="billTotal">Rs 0</strong></div><button class="btn btn-primary btn-wide" id="completeSale">Complete sale</button><small class="hint">Only complete a sale after confirming the items and quantities.</small></article>
       </div>
     </section>
