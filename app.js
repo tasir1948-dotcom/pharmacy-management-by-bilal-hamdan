@@ -441,15 +441,6 @@ function saveData() {
   return saveQueue;
 }
 /* ================= INVOICE SETTINGS ================= */
-function loadInvoiceSettings() {
-  const settings = db.settings || {};
-
-  $("invoiceClinicName").value = settings.clinicName || "";
-  $("invoiceContact").value = settings.contact || "";
-  $("invoiceWhatsapp").value = settings.whatsapp || "";
-  $("invoiceAddress").value = settings.address || "";
-}
-
 function saveInvoiceSettings(event) {
   event.preventDefault();
 
