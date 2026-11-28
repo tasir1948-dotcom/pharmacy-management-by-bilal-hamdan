@@ -441,17 +441,6 @@ function saveData() {
   return saveQueue;
 }
 /* ================= INVOICE SETTINGS ================= */
-function saveInvoiceSettings(event) {
-  event.preventDefault();
-
-  db.settings = {
-    ...(db.settings || {}),
-    clinicName: $("invoiceClinicName").value.trim(),
-    contact: $("invoiceContact").value.trim(),
-    whatsapp: $("invoiceWhatsapp").value.trim(),
-    address: $("invoiceAddress").value.trim()
-  };
-
   saveData();
   toast("Invoice settings saved successfully.");
 }
