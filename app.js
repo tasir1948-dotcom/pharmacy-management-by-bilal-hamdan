@@ -754,7 +754,12 @@ async function savePurchase(event) {
   m.qty=Number(m.qty)+quantity;
   if($("purchaseCost").value!=="")m.cost=cost;
   db.purchases.push({id:makeId(),medicineId:id,medicineName:m.name,quantity,
-    supplier:$("purchaseSupplier").value.trim(),cost,total:cost*quantity,date:today()});
+   supplier:$("purchaseSupplier").value.trim(),
+expiry:$("purchaseExpiry").value,
+cost,
+total:cost*quantity,
+date:today()
+});
   $("purchaseForm").reset(); await saveData(); renderAll(); toast("Purchase saved and stock updated.");
 }
 function renderPurchases() {
