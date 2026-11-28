@@ -763,9 +763,37 @@ date:today()
   $("purchaseForm").reset(); await saveData(); renderAll(); toast("Purchase saved and stock updated.");
 }
 function renderPurchases() {
-  const target=$("purchaseTable"); if(!target)return;
+  const target=$("purchaseTable");
+  if(!target)return;
+
   const purchases=[...db.purchases].reverse();
-  target.innerHTML=purchases.length?`<table><thead><tr><th>Date</th><th>Medicine</th><th>Quantity</th><th>Supplier</th><th>Total cost</th></tr></thead><tbody>${purchases.map(p=>`<tr><td>${escapeHTML(p.date)}</td><td>${escapeHTML(p.medicineName)}</td><td>${Number(p.quantity)}</td><td>${escapeHTML(p.supplier||"-")}</td><td>${money(p.total)}</td></tr>`).join("")}</tbody></table>`:`<p class="empty-state">No purchases recorded yet.</p>`;
+
+  target.innerHTML=purchases.length?`
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Medicine</th>
+          <th>Quantity</th>
+          <th>Expiry Date</th>
+          <th>Supplier</th>
+          <th>Total cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${purchases.map(p=>`
+          <tr>
+            <td>${escapeHTML(p.date)}</td>
+            <td>${escapeHTML(p.medicineName)}</td>
+            <td>${Number(p.quantity)}</td>
+            <td>${escapeHTML(p.expiry||"-")}</td>
+            <td>${escapeHTML(p.supplier||"-")}</td>
+            <td>${money(p.total)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `:`<p class="empty-state">No purchases recorded yet.</p>`;
 }
 /* ================= PRINT INVOICE ================= */
 function printInvoice(saleId) {
