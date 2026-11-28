@@ -831,6 +831,9 @@ function printInvoice(saleId) {
     return;
   }
 
+  const settings = db.settings || {};
+  const clinicName = settings.clinicName || "PharmaDesk";
+
   const invoiceWindow = window.open("", "_blank");
 
   if (!invoiceWindow) {
@@ -851,7 +854,7 @@ function printInvoice(saleId) {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>PharmaDesk Invoice</title>
+      <title>${escapeHTML(clinicName)} Invoice</title>
       <style>
         body {
           font-family: Arial, sans-serif;
@@ -865,6 +868,17 @@ function printInvoice(saleId) {
         h1 {
           text-align: center;
           color: #123b35;
+          margin-bottom: 8px;
+        }
+        .clinic-info {
+          text-align: center;
+          line-height: 1.7;
+          color: #555;
+          font-size: 14px;
+        }
+        h2 {
+          text-align: center;
+          margin-top: 25px;
         }
         .info {
           margin: 25px 0;
@@ -894,6 +908,11 @@ function printInvoice(saleId) {
           margin-top: 45px;
           color: #666;
         }
+        button {
+          padding: 10px 18px;
+          margin: 15px 5px;
+          cursor: pointer;
+        }
         @media print {
           button { display: none; }
         }
@@ -901,8 +920,16 @@ function printInvoice(saleId) {
     </head>
     <body>
       <div class="invoice">
-        <h1>PharmaDesk</h1>
-        <h2 style="text-align:center">SALES INVOICE</h2>
+
+        <h1>${escapeHTML(clinicName)}</h1>
+
+        <div class="clinic-info">
+          ${settings.contact ? `<div>Contact: ${escapeHTML(settings.contact)}</div>` : ""}
+          ${settings.whatsapp ? `<div>WhatsApp: ${escapeHTML(settings.whatsapp)}</div>` : ""}
+          ${settings.address ? `<div>Address: ${escapeHTML(settings.address)}</div>` : ""}
+        </div>
+
+        <h2>SALES INVOICE</h2>
 
         <div class="info">
           <b>Invoice ID:</b> ${escapeHTML(sale.id)}<br>
@@ -931,10 +958,11 @@ function printInvoice(saleId) {
           Powered by PharmaDesk
         </div>
 
-        <button onclick="window.print()">Print Invoice</button>
-<button onclick="window.close();">
-  Back to Home
-</button>
+        <div style="text-align:center">
+          <button onclick="window.print()">Print Invoice</button>
+          <button onclick="window.close()">Back to Home</button>
+        </div>
+
       </div>
     </body>
     </html>
